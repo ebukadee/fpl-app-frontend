@@ -25,10 +25,56 @@
       .highlight {
         background-color: #ffd190;
       }
+      form {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      select,
+      button {
+        padding: 8px;
+        font-size: 16px;
+        margin: 5px;
+      }
     </style>
   </head>
   <body>
     <h1>FPL Head-to-Head League Matches</h1>
+
+    <!-- Form to select event and league -->
+    <form id="selectionForm">
+      <label for="eventSelect">Select Event:</label>
+      <select id="eventSelect">
+        <option value="5">Event 5</option>
+        <option value="6">Event 6</option>
+        <option value="7">Event 7</option>
+        <option value="8">Event 8</option>
+        <option value="9">Event 9</option>
+        <option value="10">Event 10</option>
+        <option value="11">Event 11</option>
+        <option value="12">Event 12</option>
+        <option value="13">Event 13</option>
+        <option value="14">Event 14</option>
+        <option value="15">Event 15</option>
+        <option value="16">Event 16</option>
+        <option value="17">Event 17</option>
+        <option value="18">Event 18</option>
+        <option value="19">Event 19</option>
+        <option value="20">Event 20</option>
+        <option value="21">Event 21</option>
+        <option value="22">Event 22</option>
+        <option value="23">Event 23</option>
+        <option value="24">Event 24</option>
+      </select>
+
+      <label for="leagueSelect">Select League:</label>
+      <select id="leagueSelect">
+        <option value="2272990">League 1</option>
+        <option value="2309762">League 2</option>
+      </select>
+
+      <button type="button" id="applyFilters">Apply</button>
+    </form>
+
     <table id="matchTable">
       <thead>
         <tr>
@@ -46,17 +92,18 @@
     <button id="nextPage">Next Page</button>
 
     <script>
-      // Current state variables
       var currentPage = 1;
-      var currentEvent = 10; // Replace with the desired event
-      var currentLeague = 2272990; // Replace with the desired league ID
+      var currentEvent = 10; // Default event
+      var currentLeague = 2272990; // Default league
 
-      // Fetch and render data
+      // Function to fetch data
       function fetchData() {
-        var url = `https://stat-app.onrender.com/proxy?url=https://fantasy.premierleague.com/api/leagues-h2h-matches/league/${currentLeague}/?page=${currentPage}&event=${currentEvent}`;
+        var baseUrl = `https://fantasy.premierleague.com/api/leagues-h2h-matches/league/${currentLeague}/?page=${currentPage}&event=${currentEvent}`;
+        var encodedUrl = encodeURIComponent(baseUrl);
+        var proxyUrl = `https://stat-app.onrender.com/proxy?url=${encodedUrl}`;
         var xhr = new XMLHttpRequest();
 
-        xhr.open("GET", url, true);
+        xhr.open("GET", proxyUrl, true);
         xhr.onload = function () {
           if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
@@ -72,7 +119,7 @@
         xhr.send();
       }
 
-      // Render table data
+      // Function to render the table
       function renderTable(results) {
         var tableBody = document.querySelector("#matchTable tbody");
         tableBody.innerHTML = ""; // Clear the table for new data
@@ -81,7 +128,7 @@
           var match = results[i];
           var row = document.createElement("tr");
 
-          // Add GWK column (from event key of the current match)
+          // GWK column (event key)
           var gwkCell = document.createElement("td");
           gwkCell.textContent = "GWK " + match.event;
           row.appendChild(gwkCell);
@@ -117,6 +164,19 @@
         }
       }
 
+      // Event listener for the form
+      document
+        .getElementById("applyFilters")
+        .addEventListener("click", function () {
+          var eventSelect = document.getElementById("eventSelect");
+          var leagueSelect = document.getElementById("leagueSelect");
+
+          currentEvent = eventSelect.value;
+          currentLeague = leagueSelect.value;
+          currentPage = 1; // Reset to the first page
+          fetchData();
+        });
+
       // Event listener for the "Next Page" button
       document
         .getElementById("nextPage")
@@ -125,7 +185,7 @@
           fetchData();
         });
 
-      // Initial data fetch
+      // Fetch initial data
       fetchData();
     </script>
   </body>
