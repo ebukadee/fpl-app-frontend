@@ -29,18 +29,21 @@ function fetchData(endpointKey, callback) {
 // Fetch function for league1 triggered by button click
 function fetchLeague() {
   fetchData("league1", function (error, response) {
-    if (error) {
-      console.error("Error fetching data:", error);
+    if (!error) {
+      var result = JSON.parse(response); // Parse JSON response
       var content = document.getElementById("content");
-      content.innerHTML = "<p>Error: " + error + "</p>";
+
+      for (var i = 0; i < result.length; i++) {
+        // Use a simple for-loop
+        var entryName = result[i]["entry_name"];
+        var entryId = result[i]["entry"];
+        content.innerHTML +=
+          "<h5>" + entryName + " (" + entryId + ")" + "</h5>";
+      }
     } else {
-      result = JSON.parse(response);
-      var content = document.getElementById("content");
-      result.forEach((res) => {
-        entryName = res["entry_name"];
-        entryId = res["entry"];
-        content.innerHTML += "<h5>" + entryName + "(" + entryId + ")" + "</h5>";
-      });
+      console.error("Error fetching data:", error);
+      document.getElementById("content").innerHTML =
+        "<p>Error: " + error + "</p>";
     }
   });
 }
