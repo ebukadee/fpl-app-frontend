@@ -3,8 +3,8 @@ var endpoints = {
 };
 
 function fetchData(endpointKey, callback) {
-  var fullUrl =
-    "https://stat-app.onrender.com/proxy?url=" + endpoints[endpointKey];
+  var fullUrl = "https://fantasy.premierleague.com/api/league/2272990/entries/"
+    // "https://stat-app.onrender.com/proxy?url=" + endpoints[endpointKey];
 
   var xhr = new XMLHttpRequest();
   xhr.open("GET", fullUrl, true);
