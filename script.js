@@ -1,23 +1,31 @@
-// The API URL you want to make the request to
-
-const endpoints = {
-  league1: "https://fantasy.premierleague.com/api/league/2272990/entries/",
+var endpoints = {
+  league1: "https://fantasy.premierleague.com/api/league/2272990/entries/"
 };
 
 function fetchData(endpointKey) {
   // Build the full URL dynamically
-  const fullUrl = `https://stat-app.onrender.com/proxy?url=${endpoints[endpointKey]}`;
+  var fullUrl = "https://stat-app.onrender.com/proxy?url=" + encodeURIComponent(endpoints[endpointKey]);
 
-  // Fetch the data
-  fetch(fullUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      // Display the fetched data
-      const content = document.getElementById("content");
-      content.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
+  // Use XMLHttpRequest for compatibility
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", fullUrl, true);
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+        // Display the fetched data
+        var content = document.getElementById("content");
+        content.innerHTML = "<pre>" + xhr.responseText + "</pre>";
+      } else {
+        console.error("Error fetching data:", xhr.statusText);
+      }
+    }
+  };
+
+  xhr.send();
 }
-document.getElementById("results").addEventListener("click", () => fetchData("league1"));
+
+// Fetch function for league1 triggered by button click
+function fetchLeague() {
+  fetchData("league1");
+}
