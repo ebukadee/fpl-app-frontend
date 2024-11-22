@@ -1,29 +1,126 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fpl-app</title>
-  </head>
-  <body>
-    <h3>hello</h3>
-    <div id="content"></div>
-    <button id="results">View</button>
-  </body>
-  <script src="script.js"></script>
-</html> -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Button Phone Compatibility</title>
+    <title>Fetch H2H League Data</title>
+    <style>
+      table {
+        width: 100%;
+        text-align: left;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 8px;
+        border: 1px solid #ddd;
+      }
+      tr:nth-child(odd) {
+        background-color: #f2f2f2; /* Light gray for odd rows */
+      }
+      tr:nth-child(even) {
+        background-color: #ffffff; /* White for even rows */
+      }
+      tr:hover {
+        background-color: #ddd; /* Hover effect */
+      }
+      th {
+        background-color: #000;
+        color: white;
+      }
+      .winner {
+        background-color: yellow; /* Highlight the winner */
+      }
+    </style>
   </head>
-  
   <body>
-    <button id="results" onclick="fetchLeague()">Fetch League Data</button>
+    <button id="results">Fetch League Data</button>
     <div id="content"></div>
 
-    <script src="script.js"></script>
+    <script>
+      var endpoints = {
+        league1:
+          "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/2272990/?page=1&event=12",
+      };
+
+      function fetchData(endpointKey, callback) {
+        var fullUrl =
+          "https://stat-app.onrender.com/proxy?url=" + endpoints[endpointKey];
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", fullUrl, true);
+
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              callback(null, xhr.responseText); // Pass the response to the callback
+            } else {
+              callback("Error: " + xhr.statusText, null); // Pass the error
+            }
+          }
+        };
+
+        xhr.onerror = function () {
+          callback("Network error", null);
+        };
+
+        xhr.send();
+      }
+
+      function fetchLeague() {
+        fetchData("league1", function (error, response) {
+          var content = document.getElementById("content");
+
+          if (error) {
+            console.error("Error fetching data:", error);
+            content.innerHTML = "<p>Error: " + error + "</p>";
+          } else {
+            var result = JSON.parse(response).results; // Parse JSON response and access results array
+            var table = "<table>";
+            table +=
+              "<tr><th>Event</th><th>Entry 1 Name</th><th>Entry 1 Points</th><th>Entry 2 Name</th><th>Entry 2 Points</th></tr>"; // Header row
+
+            // Loop through the results and display the data
+            result.forEach(function (match) {
+              var entry1Name = match["entry_1_name"];
+              var entry1Points = match["entry_1_points"];
+              var entry2Name = match["entry_2_name"];
+              var entry2Points = match["entry_2_points"];
+              var event = match["event"];
+              var gwk = "GW " + event; // Set the game week as "GW event"
+
+              // Determine winner highlight
+              var rowClass = "";
+              if (match["entry_1_points"] > match["entry_2_points"]) {
+                rowClass = "winner"; // Highlight entry 1 as winner
+              } else if (match["entry_1_points"] < match["entry_2_points"]) {
+                rowClass = "winner"; // Highlight entry 2 as winner
+              }
+
+              // Add match data to table
+              table +=
+                "<tr class='" +
+                rowClass +
+                "'><td>" +
+                gwk +
+                "</td><td>" +
+                entry1Name +
+                "</td><td>" +
+                entry1Points +
+                "</td><td>" +
+                entry2Name +
+                "</td><td>" +
+                entry2Points +
+                "</td></tr>";
+            });
+
+            table += "</table>";
+            content.innerHTML = table; // Add the table to the content div
+          }
+        });
+      }
+
+      document.getElementById("results").addEventListener("click", fetchLeague);
+    </script>
   </body>
 </html>
