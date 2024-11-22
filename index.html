@@ -28,8 +28,8 @@
         background-color: #000;
         color: white;
       }
-      .winner {
-        background-color: yellow; /* Highlight the winner */
+      .highlight {
+        background-color: yellow !important; /* Highlight cell with higher points */
       }
     </style>
   </head>
@@ -89,27 +89,25 @@
               var event = match["event"];
               var gwk = "GW " + event; // Set the game week as "GW event"
 
-              // Determine winner highlight
-              var rowClass = "";
-              if (match["entry_1_points"] > match["entry_2_points"]) {
-                rowClass = "winner"; // Highlight entry 1 as winner
-              } else if (match["entry_1_points"] < match["entry_2_points"]) {
-                rowClass = "winner"; // Highlight entry 2 as winner
-              }
+              // Determine highlight based on points comparison
+              var entry1Class = entry1Points > entry2Points ? "highlight" : "";
+              var entry2Class = entry2Points > entry1Points ? "highlight" : "";
 
-              // Add match data to table
+              // Add match data to table with highlight
               table +=
-                "<tr class='" +
-                rowClass +
-                "'><td>" +
+                "<tr><td>" +
                 gwk +
                 "</td><td>" +
                 entry1Name +
-                "</td><td>" +
+                "</td><td class='" +
+                entry1Class +
+                "'>" +
                 entry1Points +
                 "</td><td>" +
                 entry2Name +
-                "</td><td>" +
+                "</td><td class='" +
+                entry2Class +
+                "'>" +
                 entry2Points +
                 "</td></tr>";
             });
