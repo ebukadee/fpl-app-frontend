@@ -34,9 +34,13 @@ function fetchLeague() {
       var content = document.getElementById("content");
       content.innerHTML = "<p>Error: " + error + "</p>";
     } else {
+      result = JSON.parse(response);
       var content = document.getElementById("content");
-      content.innerHTML = "<pre>" + response + "</pre>";
-      console.log("Response:", response);
+      result.forEach((res) => {
+        entryName = res["entry_name"];
+        entryId = res["entry"];
+        content.innerHTML += "<h5>" + entryName + "(" + entryId + ")" + "</h5>";
+      });
     }
   });
 }
