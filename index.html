@@ -3,122 +3,136 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fetch H2H League Data</title>
+    <title>Fantasy Premier League Table</title>
     <style>
       table {
         width: 100%;
-        text-align: left;
         border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 16px;
+        text-align: center;
       }
       th,
       td {
-        padding: 8px;
         border: 1px solid #ddd;
+        padding: 8px;
       }
-      tr:nth-child(odd) {
-        background-color: #f2f2f2; /* Light gray for odd rows */
-      }
-      tr:nth-child(even) {
-        background-color: #ffffff; /* White for even rows */
-      }
-      tr:hover {
-        background-color: #ddd; /* Hover effect */
-      }
+
       th {
-        background-color: #000;
-        color: white;
+        background-color: #f4f4f4;
       }
+
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
       .highlight {
-        background-color: yellow !important; /* Highlight cell with higher points */
+        background-color: #ffd190;
+      }
+
+      .center {
+        text-align: center;
       }
     </style>
   </head>
   <body>
-    <button id="results">Fetch League Data</button>
-    <div id="content"></div>
+    <h1>FPL Head-to-Head League Matches</h1>
+    <table id="matchTable">
+      <thead>
+        <tr>
+          <th>GWK</th>
+          <th>Entry 1 Name</th>
+          <th>Entry 1 Points</th>
+          <th>Entry 2 Points</th>
+          <th>Entry 2 Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be dynamically inserted here -->
+      </tbody>
+    </table>
+    <button id="nextPage">Next Page</button>
 
     <script>
-      var endpoints = {
-        league1:
-          "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/2272990/?page=1&event=12",
-      };
+      let currentPage = 1;
+      const currentLeague = 2272990; // Use one league for simplicity
 
-      function fetchData(endpointKey, callback) {
-        var fullUrl =
-          "https://stat-app.onrender.com/proxy?url=" + endpoints[endpointKey];
+      function fetchData() {
+        const url = `https://stat-app.onrender.com/proxy?url=https://fantasy.premierleague.com/api/leagues-h2h-matches/league/${currentLeague}/?page=${currentPage}`;
 
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", fullUrl, true);
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-              callback(null, xhr.responseText); // Pass the response to the callback
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.results) {
+              renderTable(response.results, response.event);
             } else {
-              callback("Error: " + xhr.statusText, null); // Pass the error
+              console.error("No results found in response.");
             }
+          } else {
+            console.error("Failed to fetch data:", xhr.statusText);
           }
         };
-
         xhr.onerror = function () {
-          callback("Network error", null);
+          console.error("Network error occurred.");
         };
-
         xhr.send();
       }
 
-      function fetchLeague() {
-        fetchData("league1", function (error, response) {
-          var content = document.getElementById("content");
+      function renderTable(results, event) {
+        const tableBody = document.querySelector("#matchTable tbody");
+        tableBody.innerHTML = ""; // Clear the table for new data
 
-          if (error) {
-            console.error("Error fetching data:", error);
-            content.innerHTML = "<p>Error: " + error + "</p>";
-          } else {
-            var result = JSON.parse(response).results; // Parse JSON response and access results array
-            var table = "<table>";
-            table +=
-              "<tr><th>Event</th><th>Entry 1 Name</th><th>Entry 1 Points</th><th>Entry 2 Name</th><th>Entry 2 Points</th></tr>"; // Header row
+        results.forEach((match) => {
+          const row = document.createElement("tr");
 
-            // Loop through the results and display the data
-            result.forEach(function (match) {
-              var entry1Name = match["entry_1_name"];
-              var entry1Points = match["entry_1_points"];
-              var entry2Name = match["entry_2_name"];
-              var entry2Points = match["entry_2_points"];
-              var event = match["event"];
-              var gwk = "GW " + event; // Set the game week as "GW event"
+          // GWK Cell
+          const gwkCell = document.createElement("td");
+          gwkCell.textContent = "GWK " + event; // Use event from the JSON response
+          row.appendChild(gwkCell);
 
-              // Determine highlight based on points comparison
-              var entry1Class = entry1Points > entry2Points ? "highlight" : "";
-              var entry2Class = entry2Points > entry1Points ? "highlight" : "";
+          // Entry 1 Name
+          const entry1NameCell = document.createElement("td");
+          entry1NameCell.textContent = match.entry_1_name || "N/A";
+          row.appendChild(entry1NameCell);
 
-              // Add match data to table with highlight
-              table +=
-                "<tr><td>" +
-                gwk +
-                "</td><td>" +
-                entry1Name +
-                "</td><td class='" +
-                entry1Class +
-                "'>" +
-                entry1Points +
-                "</td><td>" +
-                entry2Name +
-                "</td><td class='" +
-                entry2Class +
-                "'>" +
-                entry2Points +
-                "</td></tr>";
-            });
+          // Entry 1 Points
+          const entry1PointsCell = document.createElement("td");
+          entry1PointsCell.textContent = match.entry_1_points || 0;
+          row.appendChild(entry1PointsCell);
 
-            table += "</table>";
-            content.innerHTML = table; // Add the table to the content div
+          // Entry 2 Points
+          const entry2PointsCell = document.createElement("td");
+          entry2PointsCell.textContent = match.entry_2_points || 0;
+          row.appendChild(entry2PointsCell);
+
+          // Entry 2 Name
+          const entry2NameCell = document.createElement("td");
+          entry2NameCell.textContent = match.entry_2_name || "N/A";
+          row.appendChild(entry2NameCell);
+
+          // Highlight the winner
+          if (match.entry_1_points > match.entry_2_points) {
+            entry1PointsCell.classList.add("highlight");
+          } else if (match.entry_2_points > match.entry_1_points) {
+            entry2PointsCell.classList.add("highlight");
           }
+
+          tableBody.appendChild(row);
         });
       }
 
-      document.getElementById("results").addEventListener("click", fetchLeague);
+      // Next Page Button
+      document
+        .getElementById("nextPage")
+        .addEventListener("click", function () {
+          currentPage++;
+          fetchData();
+        });
+
+      // Fetch initial data
+      fetchData();
     </script>
   </body>
 </html>
