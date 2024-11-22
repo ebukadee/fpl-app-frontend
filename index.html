@@ -1,47 +1,28 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fpl-app</title>
+  </head>
+  <body>
+    <h3>hello</h3>
+    <div id="content"></div>
+    <button id="results">View</button>
+  </body>
+  <script src="script.js"></script>
+</html> -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fetch League Data</title>
-</head>
-<body>
-  <button id="results">Fetch League Data</button>
-  <div id="content"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Button Phone Compatibility</title>
+  </head>
+  <body>
+    <button id="results" onclick="fetchLeague()">Fetch League Data</button>
+    <div id="content"></div>
 
-  <script>
-    // The API URL you want to make the request to
-    var endpoints = {
-      league1: "https://fantasy.premierleague.com/api/league/2272990/entries/"
-    };
-
-    function fetchData(endpointKey) {
-      // Build the full URL dynamically
-      var fullUrl = "https://stat-app.onrender.com/proxy?url=" + endpoints[endpointKey];
-
-      // Use fetch to get the data
-      fetch(fullUrl)
-        .then(function (response) {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          return response.json();
-        })
-        .then(function (data) {
-          // Display the fetched data
-          var content = document.getElementById("content");
-          content.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
-        })
-        .catch(function (error) {
-          console.error("Error fetching data:", error);
-        });
-    }
-
-    // Add event listener for button click
-    var resultsButton = document.getElementById("results");
-    resultsButton.addEventListener("click", function () {
-      fetchData("league1");
-    });
-  </script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
