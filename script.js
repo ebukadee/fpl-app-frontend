@@ -2,25 +2,25 @@ var endpoints = {
   league1: "https://fantasy.premierleague.com/api/league/2272990/entries/",
 };
 
-function fetchData(endpointKey) {
-  // Build the full URL dynamically
+function fetchData(endpointKey, callback) {
   var fullUrl =
     "https://stat-app.onrender.com/proxy?url=" + endpoints[endpointKey];
 
-  // Use XMLHttpRequest for compatibility
   var xhr = new XMLHttpRequest();
   xhr.open("GET", fullUrl, true);
 
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
-        // Display the fetched data
-        var content = document.getElementById("content");
-        content.innerHTML = "<pre>" + xhr.responseText + "</pre>";
+        callback(null, xhr.responseText); // Call the callback with the data
       } else {
-        console.error("Error fetching data:", xhr.statusText);
+        callback(xhr.statusText, null); // Call the callback with the error
       }
     }
+  };
+
+  xhr.onerror = function () {
+    callback("Network error", null); // Handle network errors
   };
 
   xhr.send();
@@ -28,5 +28,15 @@ function fetchData(endpointKey) {
 
 // Fetch function for league1 triggered by button click
 function fetchLeague() {
-  fetchData("league1");
+  fetchData("league1", function (error, response) {
+    if (error) {
+      console.error("Error fetching data:", error);
+      var content = document.getElementById("content");
+      content.innerHTML = "<p>Error: " + error + "</p>";
+    } else {
+      var content = document.getElementById("content");
+      content.innerHTML = "<pre>" + response + "</pre>";
+      console.log("Response:", response);
+    }
+  });
 }
