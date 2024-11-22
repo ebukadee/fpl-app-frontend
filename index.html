@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,4 +11,51 @@
     <button id="results">View</button>
   </body>
   <script src="script.js"></script>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button Phone Compatibility</title>
+</head>
+<body>
+  <button id="results" onclick="fetchLeague()">Fetch League Data</button>
+  <div id="content"></div>
+
+  <script>
+    // The API URL you want to make the request to
+    var endpoints = {
+      league1: "https://fantasy.premierleague.com/api/league/2272990/entries/"
+    };
+
+    function fetchData(endpointKey) {
+      // Build the full URL dynamically
+      var fullUrl = "https://stat-app.onrender.com/proxy?url=" + encodeURIComponent(endpoints[endpointKey]);
+
+      // Use XMLHttpRequest for compatibility
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", fullUrl, true);
+
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            // Display the fetched data
+            var content = document.getElementById("content");
+            content.innerHTML = "<pre>" + xhr.responseText + "</pre>";
+          } else {
+            console.error("Error fetching data:", xhr.statusText);
+          }
+        }
+      };
+
+      xhr.send();
+    }
+
+    // Fetch function for league1 triggered by button click
+    function fetchLeague() {
+      fetchData("league1");
+    }
+  </script>
+</body>
 </html>
