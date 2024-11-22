@@ -12,38 +12,41 @@ function fetchData(endpointKey, callback) {
   xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
-        callback(null, xhr.responseText); // Call the callback with the data
+        callback(null, xhr.responseText); // Pass the response to the callback
       } else {
-        callback(xhr.statusText, null); // Call the callback with the error
+        callback("Error: " + xhr.statusText, null); // Pass the error
       }
     }
   };
 
   xhr.onerror = function () {
-    callback("Network error", null); // Handle network errors
+    callback("Network error", null);
   };
 
   xhr.send();
 }
 
-// Fetch function for league1 triggered by button click
 function fetchLeague() {
   fetchData("league1", function (error, response) {
-    if (!error) {
+    var content = document.getElementById("content");
+
+    if (error) {
+      console.error("Error fetching data:", error);
+      content.innerHTML = "<p>Error: " + error + "</p>";
+    } else {
       var result = JSON.parse(response); // Parse JSON response
-      var content = document.getElementById("content");
+      var table = "<table border='1' style='width:100%; text-align:left;'>";
+      table += "<tr><th>Entry Name</th><th>Entry ID</th></tr>"; // Table header
 
       for (var i = 0; i < result.length; i++) {
-        // Use a simple for-loop
         var entryName = result[i]["entry_name"];
         var entryId = result[i]["entry"];
-        content.innerHTML +=
-          "<h5>" + entryName + " (" + entryId + ")" + "</h5>";
+        table +=
+          "<tr><td>" + entryName + "</td><td>" + entryId + "</td></tr>";
       }
-    } else {
-      console.error("Error fetching data:", error);
-      document.getElementById("content").innerHTML =
-        "<p>Error: " + error + "</p>";
+
+      table += "</table>";
+      content.innerHTML = table; // Add table to the content div
     }
   });
 }
