@@ -8,7 +8,6 @@
       table {
         width: 100%;
         border-collapse: collapse;
-        margin: 20px 0;
         font-size: 16px;
         text-align: center;
       }
@@ -17,21 +16,14 @@
         border: 1px solid #ddd;
         padding: 8px;
       }
-
       th {
         background-color: #f4f4f4;
       }
-
       tr:nth-child(even) {
         background-color: #f9f9f9;
       }
-
       .highlight {
         background-color: #ffd190;
-      }
-
-      .center {
-        text-align: center;
       }
     </style>
   </head>
@@ -54,19 +46,22 @@
     <button id="nextPage">Next Page</button>
 
     <script>
-      let currentPage = 1;
-      const currentLeague = 2272990; // Use one league for simplicity
+      // Current state variables
+      var currentPage = 1;
+      var currentEvent = 10; // Replace with the desired event
+      var currentLeague = 2272990; // Replace with the desired league ID
 
+      // Fetch and render data
       function fetchData() {
-        const url = `https://stat-app.onrender.com/proxy?url=https://fantasy.premierleague.com/api/leagues-h2h-matches/league/${currentLeague}/?page=${currentPage}`;
+        var url = `https://stat-app.onrender.com/proxy?url=https://fantasy.premierleague.com/api/leagues-h2h-matches/league/${currentLeague}/?page=${currentPage}&event=${currentEvent}`;
+        var xhr = new XMLHttpRequest();
 
-        const xhr = new XMLHttpRequest();
         xhr.open("GET", url, true);
         xhr.onload = function () {
           if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
+            var response = JSON.parse(xhr.responseText);
             if (response.results) {
-              renderTable(response.results, response.event);
+              renderTable(response.results);
             } else {
               console.error("No results found in response.");
             }
@@ -74,41 +69,40 @@
             console.error("Failed to fetch data:", xhr.statusText);
           }
         };
-        xhr.onerror = function () {
-          console.error("Network error occurred.");
-        };
         xhr.send();
       }
 
-      function renderTable(results, event) {
-        const tableBody = document.querySelector("#matchTable tbody");
+      // Render table data
+      function renderTable(results) {
+        var tableBody = document.querySelector("#matchTable tbody");
         tableBody.innerHTML = ""; // Clear the table for new data
 
-        results.forEach((match) => {
-          const row = document.createElement("tr");
+        for (var i = 0; i < results.length; i++) {
+          var match = results[i];
+          var row = document.createElement("tr");
 
-          // GWK Cell
-          const gwkCell = document.createElement("td");
-          gwkCell.textContent = "GWK " + event; // Use event from the JSON response
+          // Add GWK column (from event key of the current match)
+          var gwkCell = document.createElement("td");
+          gwkCell.textContent = "GWK " + match.event;
           row.appendChild(gwkCell);
 
           // Entry 1 Name
-          const entry1NameCell = document.createElement("td");
+          var entry1NameCell = document.createElement("td");
           entry1NameCell.textContent = match.entry_1_name || "N/A";
           row.appendChild(entry1NameCell);
 
           // Entry 1 Points
-          const entry1PointsCell = document.createElement("td");
+          var entry1PointsCell = document.createElement("td");
           entry1PointsCell.textContent = match.entry_1_points || 0;
           row.appendChild(entry1PointsCell);
 
           // Entry 2 Points
-          const entry2PointsCell = document.createElement("td");
+          var entry2PointsCell = document.createElement("td");
           entry2PointsCell.textContent = match.entry_2_points || 0;
           row.appendChild(entry2PointsCell);
 
           // Entry 2 Name
-          const entry2NameCell = document.createElement("td");
+          var entry2NameCell = document.createElement("td");
           entry2NameCell.textContent = match.entry_2_name || "N/A";
           row.appendChild(entry2NameCell);
 
@@ -120,10 +114,10 @@
           }
 
           tableBody.appendChild(row);
-        });
+        }
       }
 
-      // Next Page Button
+      // Event listener for the "Next Page" button
       document
         .getElementById("nextPage")
         .addEventListener("click", function () {
@@ -131,7 +125,7 @@
           fetchData();
         });
 
-      // Fetch initial data
+      // Initial data fetch
       fetchData();
     </script>
   </body>
