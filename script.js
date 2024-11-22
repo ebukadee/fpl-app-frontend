@@ -1,10 +1,11 @@
 var endpoints = {
-  league1: "https://fantasy.premierleague.com/api/league/2272990/entries/"
+  league1: "https://fantasy.premierleague.com/api/league/2272990/entries/",
 };
 
 function fetchData(endpointKey) {
   // Build the full URL dynamically
-  var fullUrl = "https://stat-app.onrender.com/proxy?url=" + encodeURIComponent(endpoints[endpointKey]);
+  var fullUrl =
+    "https://stat-app.onrender.com/proxy?url=" + endpoints[endpointKey];
 
   // Use XMLHttpRequest for compatibility
   var xhr = new XMLHttpRequest();
