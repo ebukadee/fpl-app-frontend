@@ -31,44 +31,33 @@
       .highlight {
         background-color: yellow !important;
       }
+      select,
+      button {
+        padding: 8px;
+        margin: 8px 0;
+        font-size: 14px;
+      }
     </style>
   </head>
   <body>
     <form id="selectionForm">
       <label for="event">Gameweek:</label>
       <select id="event" name="event">
-        <!-- Add Gameweek options -->
-        <option value="5">Event 5</option>
-        <option value="6">Event 6</option>
-        <option value="7">Event 7</option>
-        <option value="8">Event 8</option>
-        <option value="9">Event 9</option>
-        <option value="10">Event 10</option>
-        <option value="11">Event 11</option>
-        <option value="12" selected>Event 12</option>
-        <option value="13">Event 13</option>
-        <option value="14">Event 14</option>
-        <option value="15">Event 15</option>
-        <option value="16">Event 16</option>
-        <option value="17">Event 17</option>
-        <option value="18">Event 18</option>
-        <option value="19">Event 19</option>
-        <option value="20">Event 20</option>
-        <option value="21">Event 21</option>
-        <option value="22">Event 22</option>
-        <option value="23">Event 23</option>
-        <option value="24">Event 24</option>
+        <option value="11" selected>Gameweek 11</option>
+        <option value="13">Gameweek 13</option>
+        <option value="14">Gameweek 14</option>
+        <option value="15">Gameweek 15</option>
       </select>
 
       <label for="league">League ID:</label>
       <select id="league" name="league">
-        <!-- Add League options -->
         <option value="2272990" selected>League 1</option>
         <option value="2309762">League 2</option>
       </select>
 
       <button type="button" id="fetchData">Fetch League Data</button>
     </form>
+
     <table id="dataTable">
       <thead>
         <tr>
@@ -82,13 +71,13 @@
       <tbody id="tableBody"></tbody>
     </table>
 
+    <div id="playerDetails"></div>
+
     <script>
       function fetchLeagueData() {
-        // Get selected values from the dropdowns
         var eventInput = document.getElementById("event").value;
         var leagueInput = document.getElementById("league").value;
 
-        // Construct the URL
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
         var targetUrl =
           "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/" +
@@ -96,17 +85,14 @@
           "/?page=1&event=" +
           eventInput;
 
-        // Encode the full URL
         var fullUrl = proxyUrl + encodeURIComponent(targetUrl);
 
-        // Set up the AJAX request
         var xhr = new XMLHttpRequest();
         xhr.open("GET", fullUrl, true);
 
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4) {
             if (xhr.status === 200) {
-              // Parse the response and render the table
               var response = JSON.parse(xhr.responseText);
               renderTable(response.results);
             } else {
@@ -124,47 +110,141 @@
 
       function renderTable(results) {
         var tableBody = document.getElementById("tableBody");
-        tableBody.innerHTML = ""; // Clear previous rows
+        tableBody.innerHTML = "";
 
-        // Use a standard for loop for compatibility
         for (var i = 0; i < results.length; i++) {
           var match = results[i];
           var row = document.createElement("tr");
 
-          // Create cells
           var eventCell = document.createElement("td");
           eventCell.textContent = "GW " + match.event;
 
           var entry1NameCell = document.createElement("td");
           entry1NameCell.textContent = match.entry_1_name;
+          entry1NameCell.onclick = function () {
+            fetchPlayerDetails(match.entry_1_entry);
+          };
 
           var entry1PointsCell = document.createElement("td");
           entry1PointsCell.textContent = match.entry_1_points;
-          if (match.entry_1_points > match.entry_2_points) {
-            entry1PointsCell.className = "highlight";
-          }
 
           var entry2PointsCell = document.createElement("td");
           entry2PointsCell.textContent = match.entry_2_points;
-          if (match.entry_2_points > match.entry_1_points) {
-            entry2PointsCell.className = "highlight";
-          }
+
           var entry2NameCell = document.createElement("td");
           entry2NameCell.textContent = match.entry_2_name;
+          entry2NameCell.onclick = function () {
+            fetchPlayerDetails(match.entry_2_entry);
+          };
 
-          // Append cells to row
           row.appendChild(eventCell);
           row.appendChild(entry1NameCell);
           row.appendChild(entry1PointsCell);
           row.appendChild(entry2PointsCell);
           row.appendChild(entry2NameCell);
 
-          // Append row to table body
           tableBody.appendChild(row);
         }
       }
 
-      // Attach event listener to the button
+      function fetchPlayerDetails(playerId) {
+        var eventInput = document.getElementById("event").value;
+
+        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
+        var targetUrl =
+          "https://fantasy.premierleague.com/api/entry/" +
+          playerId +
+          "/event/" +
+          eventInput +
+          "/picks/";
+
+        var fullUrl = proxyUrl + encodeURIComponent(targetUrl);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", fullUrl, true);
+
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              var response = JSON.parse(xhr.responseText);
+              fetchPlayerNamesAndPoints(response.picks, eventInput);
+            } else {
+              alert("Error fetching player details: " + xhr.statusText);
+            }
+          }
+        };
+
+        xhr.onerror = function () {
+          alert("Network error occurred.");
+        };
+
+        xhr.send();
+      }
+
+      function fetchPlayerNamesAndPoints(picks, eventInput) {
+        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
+        var namesUrl = "https://www.livefpl.net/static3/players.json";
+        var pointsUrl =
+          "https://www.livefpl.net/static3/calc_" + eventInput + ".json";
+
+        var namesFullUrl = proxyUrl + encodeURIComponent(namesUrl);
+        var pointsFullUrl = proxyUrl + encodeURIComponent(pointsUrl);
+
+        var xhrNames = new XMLHttpRequest();
+        var xhrPoints = new XMLHttpRequest();
+
+        xhrNames.open("GET", namesFullUrl, true);
+        xhrPoints.open("GET", pointsFullUrl, true);
+
+        xhrNames.onreadystatechange = function () {
+          if (xhrNames.readyState === 4 && xhrNames.status === 200) {
+            var playerNames = JSON.parse(xhrNames.responseText);
+
+            xhrPoints.onreadystatechange = function () {
+              if (xhrPoints.readyState === 4 && xhrPoints.status === 200) {
+                var playerPoints = JSON.parse(xhrPoints.responseText);
+                renderPlayerDetailsWithPoints(picks, playerNames, playerPoints);
+              }
+            };
+
+            xhrPoints.send();
+          }
+        };
+
+        xhrNames.send();
+      }
+
+      function renderPlayerDetailsWithPoints(picks, playerNames, playerPoints) {
+        var playerDetails = document.getElementById("playerDetails");
+        playerDetails.innerHTML = "<h3>Player Details</h3>";
+
+        var detailsTable =
+          "<table><tr><th>Name</th><th>Position</th><th>Multiplier</th><th>Points</th></tr>";
+
+        for (var i = 0; i < picks.length; i++) {
+          var element = picks[i].element;
+          var name = playerNames[element] || "Unknown";
+          var position = picks[i].position;
+          var multiplier = picks[i].multiplier;
+          var basePoints = playerPoints[element] || 0;
+          var totalPoints = basePoints * multiplier;
+
+          detailsTable +=
+            "<tr><td>" +
+            name +
+            "</td><td>" +
+            position +
+            "</td><td>" +
+            multiplier +
+            "</td><td>" +
+            totalPoints +
+            "</td></tr>";
+        }
+
+        detailsTable += "</table>";
+        playerDetails.innerHTML = detailsTable;
+      }
+
       document
         .getElementById("fetchData")
         .addEventListener("click", fetchLeagueData);
