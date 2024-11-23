@@ -7,18 +7,17 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        margin: 20px;
+        margin: auto;
         line-height: 1.6;
+        width: auto;
       }
       .h2h-match {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        background-color: #fdfdfd;
+        margin-bottom: 6px;
+        padding: 5px;
+        background-color: #e6e6e6;
         cursor: pointer;
       }
       .h2h-match:hover {
@@ -32,34 +31,30 @@
         font-weight: bold;
       }
       .player .points {
-        margin-top: 5px;
+        margin-top: 3px;
       }
       .divider {
         font-weight: bold;
-        color: #666;
+        color: #535353;
       }
       .player-details {
         margin-top: 16px;
-        background-color: #f9f9f9;
-        padding: 16px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
+        background-color: #e6e6e6;
+        padding: 8px;
       }
       .player-details-pair {
         display: flex;
         justify-content: space-between;
-        gap: 16px;
-        margin-top: 16px;
+        gap: 8px;
+        margin-top: 8px;
       }
       .player-card {
         flex: 1;
-        border: 1px solid #ddd;
-        padding: 10px;
-        background-color: #fff;
-        border-radius: 5px;
+        padding: 5px;
+        background-color: #e6e6e6;
       }
       .player-card h4 {
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         font-size: 16px;
         font-weight: bold;
       }
@@ -69,19 +64,14 @@
       }
       select,
       button {
-        padding: 8px;
+        padding: 4px;
         font-size: 14px;
-        margin-right: 10px;
+        margin-right: 5px;
       }
       button {
         cursor: pointer;
         background-color: #161616;
         color: white;
-        border: none;
-        border-radius: 5px;
-      }
-      button:hover {
-        background-color: #444;
       }
     </style>
   </head>
@@ -93,8 +83,7 @@
       <label for="league">League ID:</label>
       <select id="league" name="league">
         <option value="2272990" selected>League 1</option>
-        <option value="2272991">League 2</option>
-        <option value="2272992">League 3</option>
+        <option value="2309762">League 2</option>
       </select>
 
       <button type="button" id="fetchData">Fetch League Data</button>
