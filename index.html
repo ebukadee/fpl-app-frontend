@@ -25,20 +25,54 @@
         background-color: #ddd;
       }
       th {
-        background-color: #000;
+        background-color: #161616;
         color: white;
       }
       .highlight {
         background-color: yellow !important;
+      }
+      select,
+      button {
+        padding: 8px;
+        margin: 8px 0;
+        font-size: 14px;
       }
     </style>
   </head>
   <body>
     <form id="selectionForm">
       <label for="event">Gameweek:</label>
-      <input type="number" id="event" name="event" value="12" />
+      <select id="event" name="event">
+        <!-- Add Gameweek options -->
+        <option value="5">Event 5</option>
+        <option value="6">Event 6</option>
+        <option value="7">Event 7</option>
+        <option value="8">Event 8</option>
+        <option value="9">Event 9</option>
+        <option value="10">Event 10</option>
+        <option value="11">Event 11</option>
+        <option value="12" selected>Event 12</option>
+        <option value="13">Event 13</option>
+        <option value="14">Event 14</option>
+        <option value="15">Event 15</option>
+        <option value="16">Event 16</option>
+        <option value="17">Event 17</option>
+        <option value="18">Event 18</option>
+        <option value="19">Event 19</option>
+        <option value="20">Event 20</option>
+        <option value="21">Event 21</option>
+        <option value="22">Event 22</option>
+        <option value="23">Event 23</option>
+        <option value="24">Event 24</option>
+      </select>
+
       <label for="league">League ID:</label>
-      <input type="number" id="league" name="league" value="2272990" />
+      <select id="league" name="league">
+        <!-- Add League options -->
+        <option value="2272990" selected>League 1</option>
+        <option value="2309762">League 2</option>
+      </select>
+
       <button type="button" id="fetchData">Fetch League Data</button>
     </form>
     <table id="dataTable">
@@ -56,7 +90,7 @@
 
     <script>
       function fetchLeagueData() {
-        // Get inputs from the form
+        // Get selected values from the dropdowns
         var eventInput = document.getElementById("event").value;
         var leagueInput = document.getElementById("league").value;
 
