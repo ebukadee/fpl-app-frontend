@@ -9,12 +9,13 @@
         font-family: Arial, sans-serif;
         line-height: 1.6;
         margin: auto;
+        font-size: 14px; /* Adjusted for smaller screens */
       }
       .h2h-match {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 6px;
+        margin-bottom: 4px; /* Compact spacing */
         padding: 5px;
         background-color: #e6e6e6;
         cursor: pointer;
@@ -34,6 +35,7 @@
         justify-content: space-between;
         gap: 8px;
         margin-top: 8px;
+        flex-wrap: wrap; /* Allows wrapping for smaller screens */
       }
       .player-card {
         flex: 1;
@@ -42,7 +44,7 @@
       }
       .player-card h4 {
         margin-bottom: 5px;
-        font-size: 16px;
+        font-size: 14px; /* Compact size for details */
         font-weight: bold;
       }
       .low-points {
@@ -71,7 +73,6 @@
     </form>
 
     <div id="h2hContainer"></div>
-
     <div id="playerDetails" class="player-details"></div>
 
     <script>
@@ -286,40 +287,62 @@
       }
 
       function displayPlayerData(picks, playerName, container, eventTransfers) {
-        var header = document.createElement("h4");
-        header.textContent = playerName +" "+ eventTransfers;
-        container.appendChild(header);
+  var totalPoints = 0; // Variable to store the total points for the player
 
-        for (var i = 0; i < picks.length; i++) {
-          var element = picks[i].element;
-          var multiplier = picks[i].multiplier;
-          var basePoints = playerPoints[element] || 0;
-          var totalPoints =
-            multiplier === 0 ? basePoints : basePoints * multiplier;
+  for (var i = 0; i < picks.length; i++) {
+    var element = picks[i].element;
+    var multiplier = picks[i].multiplier;
+    var basePoints = playerPoints[element] || 0;
+    var totalElementPoints =
+      multiplier === 0 ? basePoints : basePoints * multiplier;
 
-          // Check if the player is captained or vice-captain
-          var isCaptain = picks[i].is_captain;
-          var isViceCaptain = picks[i].is_vice_captain;
-          var playerLabel = playerNames[element] || "Unknown Player";
+    totalPoints += totalElementPoints; // Add or subtract the player's total points
+  }
 
-          if (isCaptain) {
-            playerLabel += " (C)";
-          } else if (isViceCaptain) {
-            playerLabel += " (VC)";
-          }
+  // Subtract event transfer cost
+  totalPoints -= parseInt(eventTransfers.match(/\((-?\d+)\)/)[1]);
 
-          var playerDiv = document.createElement("div");
-          playerDiv.innerHTML =
-            "<span>" +
-            playerLabel +
-            "</span>: " +
-            (multiplier === 0
-              ? '<span class="low-points">' + totalPoints + "</span>"
-              : totalPoints);
+  var header = document.createElement("h4");
+  header.innerHTML =
+    playerName +
+    " " +
+    eventTransfers +
+    "<br>Total Points: <span style='color: green;'>" +
+    totalPoints +
+    "</span>";
+  container.appendChild(header);
 
-          container.appendChild(playerDiv);
-        }
-      }
+  for (var i = 0; i < picks.length; i++) {
+    var element = picks[i].element;
+    var multiplier = picks[i].multiplier;
+    var basePoints = playerPoints[element] || 0;
+    var totalElementPoints =
+      multiplier === 0 ? basePoints : basePoints * multiplier;
+
+    // Check if the player is captained or vice-captain
+    var isCaptain = picks[i].is_captain;
+    var isViceCaptain = picks[i].is_vice_captain;
+    var playerLabel = playerNames[element] || "Unknown Player";
+
+    if (isCaptain) {
+      playerLabel += " (C)";
+    } else if (isViceCaptain) {
+      playerLabel += " (VC)";
+    }
+
+    var playerDiv = document.createElement("div");
+    playerDiv.innerHTML =
+      "<span>" +
+      playerLabel +
+      "</span>: " +
+      (multiplier === 0
+        ? "<span class='low-points'>" + totalElementPoints + "</span>"
+        : totalElementPoints);
+
+    container.appendChild(playerDiv);
+  }
+}
+
 
       document
         .getElementById("fetchData")
