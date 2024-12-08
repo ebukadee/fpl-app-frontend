@@ -16,7 +16,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 7px; /* Compact spacing */
+        margin-bottom: 6px;
         padding: 5px;
         background-color: #e6e6e6;
         cursor: pointer;
@@ -44,7 +44,7 @@
       }
       .player-card h4 {
         margin-bottom: 5px;
-        font-size: 14px; /* Compact size for details */
+        font-size: 16px;
         font-weight: bold;
       }
       .low-points {
@@ -68,6 +68,7 @@
     </form>
 
     <div id="h2hContainer"></div>
+
     <div id="playerDetails" class="player-details"></div>
 
     <script>
@@ -282,62 +283,40 @@
       }
 
       function displayPlayerData(picks, playerName, container, eventTransfers) {
-  var totalPoints = 0; // Variable to store the total points for the player
+        var header = document.createElement("h4");
+        header.textContent = playerName +" "+ eventTransfers;
+        container.appendChild(header);
 
-  for (var i = 0; i < picks.length; i++) {
-    var element = picks[i].element;
-    var multiplier = picks[i].multiplier;
-    var basePoints = playerPoints[element] || 0;
-    var totalElementPoints =
-      multiplier === 0 ? basePoints : basePoints * multiplier;
+        for (var i = 0; i < picks.length; i++) {
+          var element = picks[i].element;
+          var multiplier = picks[i].multiplier;
+          var basePoints = playerPoints[element] || 0;
+          var totalPoints =
+            multiplier === 0 ? basePoints : basePoints * multiplier;
 
-    totalPoints += totalElementPoints; // Add or subtract the player's total points
-  }
+          // Check if the player is captained or vice-captain
+          var isCaptain = picks[i].is_captain;
+          var isViceCaptain = picks[i].is_vice_captain;
+          var playerLabel = playerNames[element] || "Unknown Player";
 
-  // Subtract event transfer cost
-  totalPoints -= parseInt(eventTransfers.match(/\((-?\d+)\)/)[1]);
+          if (isCaptain) {
+            playerLabel += " (C)";
+          } else if (isViceCaptain) {
+            playerLabel += " (VC)";
+          }
 
-  var header = document.createElement("h4");
-  header.innerHTML =
-    playerName +
-    " " +
-    eventTransfers +
-    "<br>Total Points: <span style='color: green;'>" +
-    totalPoints +
-    "</span>";
-  container.appendChild(header);
+          var playerDiv = document.createElement("div");
+          playerDiv.innerHTML =
+            "<span>" +
+            playerLabel +
+            "</span>: " +
+            (multiplier === 0
+              ? '<span class="low-points">' + totalPoints + "</span>"
+              : totalPoints);
 
-  for (var i = 0; i < picks.length; i++) {
-    var element = picks[i].element;
-    var multiplier = picks[i].multiplier;
-    var basePoints = playerPoints[element] || 0;
-    var totalElementPoints =
-      multiplier === 0 ? basePoints : basePoints * multiplier;
-
-    // Check if the player is captained or vice-captain
-    var isCaptain = picks[i].is_captain;
-    var isViceCaptain = picks[i].is_vice_captain;
-    var playerLabel = playerNames[element] || "Unknown Player";
-
-    if (isCaptain) {
-      playerLabel += " (C)";
-    } else if (isViceCaptain) {
-      playerLabel += " (VC)";
-    }
-
-    var playerDiv = document.createElement("div");
-    playerDiv.innerHTML =
-      "<span>" +
-      playerLabel +
-      "</span>: " +
-      (multiplier === 0
-        ? "<span class='low-points'>" + totalElementPoints + "</span>"
-        : totalElementPoints);
-
-    container.appendChild(playerDiv);
-  }
-}
-
+          container.appendChild(playerDiv);
+        }
+      }
 
       document
         .getElementById("fetchData")
