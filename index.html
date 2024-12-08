@@ -268,16 +268,26 @@
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4 && xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
-            displayPlayerData(response.picks, playerName, container);
+            var eventTransfers = response.entry_history.event_transfers;
+            var eventTransfersCost =
+              response.entry_history.event_transfers_cost * -1;
+            var transfersCost = eventTransfers + "(" + eventTransfersCost + ")";
+
+            displayPlayerData(
+              response.picks,
+              playerName,
+              container,
+              transfersCost
+            );
           }
         };
 
         xhr.send();
       }
 
-      function displayPlayerData(picks, playerName, container) {
+      function displayPlayerData(picks, playerName, container, eventTransfers) {
         var header = document.createElement("h4");
-        header.textContent = playerName;
+        header.textContent = playerName +" "+ eventTransfers;
         container.appendChild(header);
 
         for (var i = 0; i < picks.length; i++) {
