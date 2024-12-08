@@ -199,7 +199,7 @@
             match.entry_2_points
           );
 
-          var divider = document.createElement("span");
+          var divider = document.createElement("p");
           divider.className = "divider";
           divider.textContent = "vs";
 
@@ -212,14 +212,14 @@
       }
 
       function createPlayerDiv(playerName, points) {
-        var playerDiv = document.createElement("span");
+        var playerDiv = document.createElement("p");
         playerDiv.className = "player";
 
-        var nameDiv = document.createElement("span");
+        var nameDiv = document.createElement("p");
         nameDiv.className = "name";
         nameDiv.textContent = playerName;
 
-        var pointsDiv = document.createElement("span");
+        var pointsDiv = document.createElement("p");
         pointsDiv.className = "points";
         pointsDiv.textContent = points;
 
