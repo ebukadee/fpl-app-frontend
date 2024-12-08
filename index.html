@@ -23,10 +23,11 @@
         flex: 1;
         text-align: center;
       }
-
-      .player .points {
+      .player .name {
         font-weight: bold;
-        padding: 5px;
+      }
+      .player .points {
+        margin-top: 3px;
       }
       .player-details-pair {
         display: flex;
@@ -199,7 +200,7 @@
             match.entry_2_points
           );
 
-          var divider = document.createElement("p");
+          var divider = document.createElement("div");
           divider.className = "divider";
           divider.textContent = "vs";
 
@@ -212,16 +213,16 @@
       }
 
       function createPlayerDiv(playerName, points) {
-        var playerDiv = document.createElement("p");
+        var playerDiv = document.createElement("div");
         playerDiv.className = "player";
 
-        var nameDiv = document.createElement("p");
+        var nameDiv = document.createElement("div");
         nameDiv.className = "name";
         nameDiv.textContent = playerName;
 
-        var pointsDiv = document.createElement("p");
+        var pointsDiv = document.createElement("div");
         pointsDiv.className = "points";
-        pointsDiv.textContent = points;
+        pointsDiv.textContent = points + " points";
 
         playerDiv.appendChild(nameDiv);
         playerDiv.appendChild(pointsDiv);
@@ -276,7 +277,7 @@
 
       function displayPlayerData(picks, playerName, container) {
         var header = document.createElement("h4");
-        header.textContent = playerName + ":";
+        header.textContent = playerName;
         container.appendChild(header);
 
         for (var i = 0; i < picks.length; i++) {
@@ -286,10 +287,21 @@
           var totalPoints =
             multiplier === 0 ? basePoints : basePoints * multiplier;
 
+          // Check if the player is captained or vice-captain
+          var isCaptain = picks[i].is_captain;
+          var isViceCaptain = picks[i].is_vice_captain;
+          var playerLabel = playerNames[element] || "Unknown Player";
+
+          if (isCaptain) {
+            playerLabel += " (C)";
+          } else if (isViceCaptain) {
+            playerLabel += " (VC)";
+          }
+
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
             "<span>" +
-            (playerNames[element] || "Unknown Player") +
+            playerLabel +
             "</span>: " +
             (multiplier === 0
               ? '<span class="low-points">' + totalPoints + "</span>"
@@ -298,6 +310,7 @@
           container.appendChild(playerDiv);
         }
       }
+
       document
         .getElementById("fetchData")
         .addEventListener("click", fetchLeagueData);
