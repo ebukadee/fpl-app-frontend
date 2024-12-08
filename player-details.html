@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Player Details</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: auto;
+        padding: 10px;
+      }
+      h1 {
+        font-size: 18px;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background-color: #f4f4f4;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Player Details</h1>
+    <div id="jsonContainer">Loading player data...</div>
+
+    <script>
+      // Define the proxy URL
+      var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
+
+      // Extract the playerId from the query string
+      var params = new URLSearchParams(window.location.search);
+      var playerId = params.get("playerId");
+
+      // Check if playerId exists
+      if (!playerId) {
+        document.getElementById("jsonContainer").textContent =
+          "Error: No player ID provided in the URL.";
+      } else {
+        // Construct the target API URL
+        var targetUrl =
+          "https://fantasy.premierleague.com/api/entry/" + playerId + "/";
+        var fullUrl = proxyUrl + encodeURIComponent(targetUrl);
+
+        // Fetch the data using XMLHttpRequest for compatibility with older phones
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", fullUrl, true);
+
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            var container = document.getElementById("jsonContainer");
+            if (xhr.status === 200) {
+              // Parse and display the JSON data
+              try {
+                var data = JSON.parse(xhr.responseText);
+                var pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(data, null, 2);
+                container.innerHTML = ""; // Clear loading message
+                container.appendChild(pre);
+              } catch (err) {
+                container.textContent =
+                  "Error parsing JSON data: " + err.message;
+              }
+            } else {
+              container.textContent =
+                "Error fetching player data: " + xhr.statusText;
+            }
+          }
+        };
+
+        xhr.onerror = function () {
+          document.getElementById("jsonContainer").textContent =
+            "Network error occurred while fetching player data.";
+        };
+
+        xhr.send();
+      }
+    </script>
+  </body>
+</html>
