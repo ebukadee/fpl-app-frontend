@@ -25,7 +25,7 @@
         flex: 1;
         text-align: center;
       }
-      
+
       .player .points {
         font-weight: bold;
         margin-top: 3px;
@@ -49,7 +49,7 @@
       .low-points {
         color: red;
         font-weight: bold;
-      }    
+      }
     </style>
   </head>
   <body>
@@ -282,14 +282,18 @@
       }
 
       function displayPlayerData(picks, playerName, container, eventTransfers) {
+        var provitionalPoints = [];
         var header = document.createElement("h4");
-        header.textContent = playerName +" "+ eventTransfers;
-        container.appendChild(header);
+        header.textContent = playerName + " " + eventTransfers;
+        container.appendChild(header);      
 
         for (var i = 0; i < picks.length; i++) {
           var element = picks[i].element;
           var multiplier = picks[i].multiplier;
           var basePoints = playerPoints[element] || 0;
+          var points = basePoints * multiplier;
+          provitionalPoints.push(points);
+
           var totalPoints =
             multiplier === 0 ? basePoints : basePoints * multiplier;
 
@@ -315,6 +319,14 @@
 
           container.appendChild(playerDiv);
         }
+        var provitionalSum = provitionalPoints.reduce(
+          (accumulator, currentValue) => accumulator + currentValue,
+          0
+        );
+
+        var footer = document.createElement("span");
+        footer.textContent = " " + provitionalSum + " " + "points";
+        header.appendChild(footer);
       }
 
       document
