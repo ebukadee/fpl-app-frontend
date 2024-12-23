@@ -7,65 +7,85 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        line-height: 1.6;
-        margin: 0 auto;
-        width: 95%;
-        max-width: 600px;
-        font-size: 12px;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
       }
-      button {
-        background-color: #007bff;
-        color: #fff;
-        border: none;
-        cursor: pointer;
+
+      #h2hContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+        max-width: 100%;
+        overflow-x: auto;
+        box-sizing: border-box;
       }
-      button:hover {
-        background-color: #0056b3;
-      }
-      form{
-        padding: 6px;
-      }
+
       .h2h-match {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        padding: 8px;
-        background-color: #f0f0f0;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        width: 48%;
+        min-width: 300px;
+        background-color: #f9f9f9;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         cursor: pointer;
       }
+
+      .h2h-match:hover {
+        background-color: #f1f1f1;
+      }
+
       .player {
-        flex: 1;
-        text-align: center;
-      }
-      .player .points {
-        font-weight: bold;
-        margin-top: 5px;
-      }
-      .player-details-pair {
         display: flex;
         justify-content: space-between;
-        gap: 8px;
-        margin-top: 12px;
+        margin-bottom: 8px;
       }
+
+      .name {
+        font-weight: bold;
+      }
+
+      .points {
+        color: #007bff;
+      }
+
+      .low-points {
+        color: red;
+      }
+
+      #playerDetails {
+        margin: 20px 10px;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: #fff;
+      }
+
       .player-card {
         flex: 1;
         padding: 10px;
+        margin: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
         background-color: #f9f9f9;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
+
       .player-card h4 {
-        margin-bottom: 8px;
-        font-size: 14px;
-        font-weight: bold;
-        text-align: center;
+        margin: 0 0 10px;
       }
-      .low-points {
-        color: red;
-        font-weight: bold;
+
+      .player-details-pair {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+
+      .player-card div {
+        margin: 5px 0;
       }
     </style>
   </head>
@@ -89,7 +109,7 @@
     <script>
       var playerPoints = {}; // Cache for player points
       var playerPicksCache = {}; // Cache for player picks (entryId => picks)
-    
+
       function populateDropdown() {
         var eventDropdown = document.getElementById("event");
         for (var i = 5; i <= 20; i++) {
@@ -99,23 +119,23 @@
           eventDropdown.appendChild(option);
         }
       }
-    
+
       function fetchLeagueData() {
         var eventInput = document.getElementById("event").value;
         var leagueInput = document.getElementById("league").value;
-    
+
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
         var targetUrl =
           "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/" +
           leagueInput +
           "/?page=1&event=" +
           eventInput;
-    
+
         var fullUrl = proxyUrl + encodeURIComponent(targetUrl);
-    
+
         var xhr = new XMLHttpRequest();
         xhr.open("GET", fullUrl, true);
-    
+
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4) {
             if (xhr.status === 200) {
@@ -126,51 +146,51 @@
             }
           }
         };
-    
+
         xhr.onerror = function () {
           alert("Network error occurred.");
         };
-    
+
         xhr.send();
       }
       // function preloadPlayerNames(eventInput, matches) {
       //   playerNames = playerData;
       //   preloadPlayerPoints(eventInput, matches);
       // }
-    
+
       function preloadPlayerPoints(eventInput, matches) {
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
         var pointsUrl =
           "https://fantasy.premierleague.com/api/event/" +
           eventInput +
           "/live/";
-    
+
         var xhr = new XMLHttpRequest();
         xhr.open("GET", proxyUrl + encodeURIComponent(pointsUrl), true);
-    
+
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4 && xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
             var elements = response.elements;
-    
+
             for (var i = 0; i < elements.length; i++) {
               playerPoints[elements[i].id] = elements[i].stats.total_points;
             }
-    
+
             renderH2H(matches, eventInput);
           }
         };
-    
+
         xhr.send();
       }
-    
+
       function renderH2H(matches, eventInput) {
         var h2hContainer = document.getElementById("h2hContainer");
         h2hContainer.innerHTML = "";
-    
+
         for (var i = 0; i < matches.length; i++) {
           var match = matches[i];
-    
+
           var matchDiv = document.createElement("div");
           matchDiv.className = "h2h-match";
           matchDiv.onclick = (function (
@@ -182,22 +202,39 @@
             return function () {
               renderPlayerDetails(entry1Id, entry1Name, entry2Id, entry2Name);
             };
-          })(match.entry_1_entry, match.entry_1_name, match.entry_2_entry, match.entry_2_name);
-    
-          calculateTotalPoints(match.entry_1_entry, match.entry_1_name, matchDiv, eventInput, true);
-          calculateTotalPoints(match.entry_2_entry, match.entry_2_name, matchDiv, eventInput, false);
-    
+          })(
+            match.entry_1_entry,
+            match.entry_1_name,
+            match.entry_2_entry,
+            match.entry_2_name
+          );
+
+          calculateTotalPoints(
+            match.entry_1_entry,
+            match.entry_1_name,
+            matchDiv,
+            eventInput,
+            true
+          );
+          calculateTotalPoints(
+            match.entry_2_entry,
+            match.entry_2_name,
+            matchDiv,
+            eventInput,
+            false
+          );
+
           h2hContainer.appendChild(matchDiv);
         }
       }
-    
+
       function calculateTotalPoints(entryId, entryName, container, gw, isLeft) {
         if (playerPicksCache[entryId]) {
           // Use cached data
           renderCachedPoints(entryId, entryName, container, isLeft);
           return;
         }
-    
+
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
         var entryGwUrl =
           "https://fantasy.premierleague.com/api/entry/" +
@@ -205,18 +242,18 @@
           "/event/" +
           gw +
           "/picks/";
-    
+
         var xhr = new XMLHttpRequest();
         xhr.open("GET", proxyUrl + encodeURIComponent(entryGwUrl), true);
-    
+
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4 && xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
             playerPicksCache[entryId] = response.picks; // Cache the picks
-    
+
             var totalPoints = calculatePoints(response.picks);
             var entryDiv = createPlayerDiv(entryName, totalPoints);
-    
+
             if (isLeft) {
               container.insertBefore(entryDiv, container.firstChild);
             } else {
@@ -224,10 +261,10 @@
             }
           }
         };
-    
+
         xhr.send();
       }
-    
+
       function calculatePoints(picks) {
         var totalPoints = 0;
         for (var i = 0; i < picks.length; i++) {
@@ -236,80 +273,81 @@
         }
         return totalPoints;
       }
-    
+
       function createPlayerDiv(playerName, points) {
         var playerDiv = document.createElement("div");
         playerDiv.className = "player";
-    
+
         var nameDiv = document.createElement("div");
         nameDiv.className = "name";
         nameDiv.textContent = playerName;
-    
+
         var pointsDiv = document.createElement("div");
         pointsDiv.className = "points";
         pointsDiv.textContent = points + " points";
-    
+
         playerDiv.appendChild(nameDiv);
         playerDiv.appendChild(pointsDiv);
-    
+
         return playerDiv;
       }
-    
+
       function renderCachedPoints(entryId, entryName, container, isLeft) {
         var picks = playerPicksCache[entryId];
         var totalPoints = calculatePoints(picks);
-    
+
         var entryDiv = createPlayerDiv(entryName, totalPoints);
-    
+
         if (isLeft) {
           container.insertBefore(entryDiv, container.firstChild);
         } else {
           container.appendChild(entryDiv);
         }
       }
-    
+
       function renderPlayerDetails(entry1Id, entry1Name, entry2Id, entry2Name) {
         var playerDetails = document.getElementById("playerDetails");
         playerDetails.innerHTML = "";
-    
+
         var detailsPair = document.createElement("div");
         detailsPair.className = "player-details-pair";
-    
+
         var entry1Details = document.createElement("div");
         entry1Details.className = "player-card";
-    
+
         var entry2Details = document.createElement("div");
         entry2Details.className = "player-card";
-    
+
         renderDetailsFromCache(entry1Id, entry1Name, entry1Details);
         renderDetailsFromCache(entry2Id, entry2Name, entry2Details);
-    
+
         detailsPair.appendChild(entry1Details);
         detailsPair.appendChild(entry2Details);
-    
+
         playerDetails.appendChild(detailsPair);
       }
-    
+
       function renderDetailsFromCache(entryId, playerName, container) {
         if (!playerPicksCache[entryId]) return;
-    
+
         var picks = playerPicksCache[entryId];
         var header = document.createElement("h4");
         header.textContent = playerName;
         container.appendChild(header);
-    
+
         for (var i = 0; i < picks.length; i++) {
           var pick = picks[i];
           var basePoints = playerPoints[pick.element] || 0;
-          var totalPoints = pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
+          var totalPoints =
+            pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
           var playerLabel = playerData[pick.element] || "Unknown Player";
-    
+
           if (pick.is_captain) {
             playerLabel += " (C)";
           } else if (pick.is_vice_captain) {
             playerLabel += " (VC)";
           }
-    
+
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
             "<span>" +
@@ -318,14 +356,16 @@
             (pick.multiplier === 0
               ? '<span class="low-points">' + totalPoints + "</span>"
               : totalPoints);
-    
+
           container.appendChild(playerDiv);
         }
       }
-    
-      document.getElementById("fetchData").addEventListener("click", fetchLeagueData);
-    
+
+      document
+        .getElementById("fetchData")
+        .addEventListener("click", fetchLeagueData);
+
       populateDropdown();
     </script>
-      </body>
+  </body>
 </html>
