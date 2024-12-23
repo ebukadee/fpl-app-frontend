@@ -1,4 +1,4 @@
-var playerData = {
+const playerData = {
     "1": "Fábio Vieira",
     "2": "G.Jesus",
     "3": "Gabriel",
