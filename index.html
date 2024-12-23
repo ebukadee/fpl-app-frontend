@@ -38,7 +38,6 @@
       .player {
         flex: 1;
         text-align: center;
-        
       }
       .player .points {
         font-weight: bold;
@@ -224,7 +223,7 @@
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4 && xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
-            playerPicksCache[entryId] = response.picks; // Cache the picks
+            playerPicksCache[entryId] = response; // Cache the picks
 
             var totalPoints = calculatePoints(response.picks);
             var entryDiv = createPlayerDiv(entryName, totalPoints);
@@ -305,13 +304,19 @@
       function renderDetailsFromCache(entryId, playerName, container) {
         if (!playerPicksCache[entryId]) return;
 
-        var picks = playerPicksCache[entryId];
+        var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
         header.textContent = playerName;
         container.appendChild(header);
-
-        for (var i = 0; i < picks.length; i++) {
-          var pick = picks[i];
+        var eventTransfers = overall.entry_history.event_transfers;
+        var eventTransfersCost =
+          overall.entry_history.event_transfers_cost * -1;
+        var transfersCost = eventTransfers + "(" + eventTransfersCost + ")";
+        var footer = document.createElement("span");
+        footer.textContent = " " + transfersCost;
+        header.appendChild(footer);
+        for (var i = 0; i < overall.picks.length; i++) {
+          var pick = overall.picks[i];
           var basePoints = playerPoints[pick.element] || 0;
           var totalPoints =
             pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
