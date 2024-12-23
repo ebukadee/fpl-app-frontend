@@ -7,85 +7,66 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
+        line-height: 1.6;
+        margin: 0 auto;
+        width: 100%;
+        font-size: 12px;
+        overflow: auto;
       }
-
-      #h2hContainer {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 10px;
-        max-width: 100%;
-        overflow-x: auto;
-        box-sizing: border-box;
-      }
-
-      .h2h-match {
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 10px;
-        width: 48%;
-        min-width: 300px;
-        background-color: #f9f9f9;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
         cursor: pointer;
       }
-
-      .h2h-match:hover {
-        background-color: #f1f1f1;
+      button:hover {
+        background-color: #0056b3;
       }
-
-      .player {
+      form {
+        padding: 6px;
+      }
+      .h2h-match {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         margin-bottom: 8px;
+        padding: 8px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
       }
-
-      .name {
-        font-weight: bold;
-      }
-
-      .points {
-        color: #007bff;
-      }
-
-      .low-points {
-        color: red;
-      }
-
-      #playerDetails {
-        margin: 20px 10px;
-        max-height: 300px;
-        overflow-y: auto;
-        border: 1px solid #ccc;
-        padding: 10px;
-        border-radius: 8px;
-        background-color: #fff;
-      }
-
-      .player-card {
+      .player {
         flex: 1;
-        padding: 10px;
-        margin: 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #f9f9f9;
+        text-align: center;
       }
-
-      .player-card h4 {
-        margin: 0 0 10px;
+      .player .points {
+        font-weight: bold;
+        margin-top: 5px;
       }
-
       .player-details-pair {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
+        gap: 8px;
+        margin-top: 12px;
       }
-
-      .player-card div {
-        margin: 5px 0;
+      .player-card {
+        flex: 1;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .player-card h4 {
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+      }
+      .low-points {
+        color: red;
+        font-weight: bold;
       }
     </style>
   </head>
