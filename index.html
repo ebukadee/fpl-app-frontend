@@ -8,17 +8,47 @@
       body {
         font-family: Arial, sans-serif;
         line-height: 1.6;
-        margin: auto;
-        width: auto;
-        font-size: 10px;
+        margin: 0 auto;
+        width: 95%;
+        max-width: 600px;
+        font-size: 12px;
+      }
+      form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+        justify-content: space-between;
+      }
+      form label {
+        flex: 1 1 auto;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      form select,
+      form button {
+        flex: 1 1 auto;
+        padding: 5px;
+        font-size: 12px;
+      }
+      button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
       }
       .h2h-match {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 6px;
-        padding: 5px;
-        background-color: #e6e6e6;
+        margin-bottom: 8px;
+        padding: 8px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         cursor: pointer;
       }
       .player {
@@ -27,29 +57,33 @@
       }
       .player .points {
         font-weight: bold;
-        margin-top: 3px;
+        margin-top: 5px;
       }
       .player-details-pair {
         display: flex;
         justify-content: space-between;
         gap: 8px;
-        margin-top: 8px;
+        margin-top: 12px;
       }
       .player-card {
         flex: 1;
-        padding: 5px;
-        background-color: #e6e6e6;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       .player-card h4 {
-        margin-bottom: 5px;
-        font-size: 16px;
+        margin-bottom: 8px;
+        font-size: 14px;
         font-weight: bold;
+        text-align: center;
       }
       .low-points {
         color: red;
         font-weight: bold;
       }
     </style>
+    <script src="./players.js"></script>
   </head>
   <body>
     <form id="selectionForm">
@@ -70,7 +104,6 @@
 
     <script>
       var playerPoints = {}; // To store player ID to total points mapping
-      var playerNames = {}; // To store player ID to name mapping
 
       function populateDropdown() {
         var eventDropdown = document.getElementById("event");
@@ -102,7 +135,7 @@
           if (xhr.readyState === 4) {
             if (xhr.status === 200) {
               var response = JSON.parse(xhr.responseText);
-              preloadPlayerNames(eventInput, response.results);
+              preloadPlayerPoints(eventInput, response.results);
             } else {
               alert("Error fetching data: " + xhr.statusText);
             }
@@ -111,23 +144,6 @@
 
         xhr.onerror = function () {
           alert("Network error occurred.");
-        };
-
-        xhr.send();
-      }
-
-      function preloadPlayerNames(eventInput, matches) {
-        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
-        var playersUrl = "https://www.livefpl.net/static3/players.json";
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", proxyUrl + encodeURIComponent(playersUrl), true);
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            playerNames = JSON.parse(xhr.responseText);
-            preloadPlayerPoints(eventInput, matches);
-          }
         };
 
         xhr.send();
@@ -326,7 +342,7 @@
 
           var isCaptain = picks[i].is_captain;
           var isViceCaptain = picks[i].is_vice_captain;
-          var playerLabel = playerNames[element] || "Unknown Player";
+          var playerLabel = playerData[element] || "Unknown Player";
 
           if (isCaptain) {
             playerLabel += " (C)";
