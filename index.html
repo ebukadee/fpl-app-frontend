@@ -66,8 +66,43 @@
   <body>
     <form id="selectionForm">
       <label for="event">Gameweek:</label>
-      <select id="event" name="event"></select>
-
+      <select id="event" name="event">        
+        <option value="5">Gameweek 5</option>
+        <option value="6">Gameweek 6</option>
+        <option value="7">Gameweek 7</option>
+        <option value="8">Gameweek 8</option>
+        <option value="9">Gameweek 9</option>
+        <option value="10">Gameweek 10</option>
+        <option value="11">Gameweek 11</option>
+        <option value="12">Gameweek 12</option>
+        <option value="13">Gameweek 13</option>
+        <option value="14">Gameweek 14</option>
+        <option value="15">Gameweek 15</option>
+        <option value="16">Gameweek 16</option>
+        <option value="17">Gameweek 17</option>
+        <option value="18">Gameweek 18</option>
+        <option value="19">Gameweek 19</option>
+        <option value="20">Gameweek 20</option>
+        <option value="21">Gameweek 21</option>
+        <option value="22">Gameweek 22</option>
+        <option value="23">Gameweek 23</option>
+        <option value="24">Gameweek 24</option>
+        <option value="25">Gameweek 25</option>
+        <option value="26">Gameweek 26</option>
+        <option value="27">Gameweek 27</option>
+        <option value="28">Gameweek 28</option>
+        <option value="29">Gameweek 29</option>
+        <option value="30">Gameweek 30</option>
+        <option value="31">Gameweek 31</option>
+        <option value="32">Gameweek 32</option>
+        <option value="33">Gameweek 33</option>
+        <option value="34">Gameweek 34</option>
+        <option value="35">Gameweek 35</option>
+        <option value="36">Gameweek 36</option>
+        <option value="37">Gameweek 37</option>
+        <option value="38">Gameweek 38</option>
+      </select>     
+    <form id="selectionForm">
       <label for="league">League ID:</label>
       <select id="league" name="league">
         <option value="2272990" selected>League 1</option>
@@ -82,19 +117,13 @@
     <script src="players.js"></script>
     <script>
       var playerPoints = {}; // Cache for player points
-      var playerPicksCache = {}; // Cache for player picks (entryId => picks)
-
-      function populateDropdown() {
-        var eventDropdown = document.getElementById("event");
-        for (var i = 5; i <= 38; i++) {
-          var option = document.createElement("option");
-          option.value = i;
-          option.textContent = "Gameweek " + i;
-          eventDropdown.appendChild(option);
-        }
-      }
+      var playerPicksCache = {}; // Cache for player picks (entryId => picks)    
 
       function fetchLeagueData() {
+        // Clear caches when dropdown values change
+        playerPoints = {};
+        playerPicksCache = {};
+
         var eventInput = document.getElementById("event").value;
         var leagueInput = document.getElementById("league").value;
 
@@ -126,12 +155,7 @@
         };
 
         xhr.send();
-      }
-      // function preloadPlayerNames(eventInput, matches) {
-      //   playerNames = playerData;
-      //   preloadPlayerPoints(eventInput, matches);
-      // }
-
+      }    
       function preloadPlayerPoints(eventInput, matches) {
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
         var pointsUrl =
@@ -341,12 +365,9 @@
         }
       }
 
-
       document
         .getElementById("fetchData")
         .addEventListener("click", fetchLeagueData);
-
-      populateDropdown();
     </script>
   </body>
 </html>
