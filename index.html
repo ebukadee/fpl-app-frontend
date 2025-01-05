@@ -331,7 +331,7 @@
 
         var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
-        header.innerHTML =  `<a href="https://www2.livefpl.net/${entryId}">${playerName}</a>`;
+        header.innerHTML = '<a href="https://www2.livefpl.net/' + entryId + '">' + playerName + '</a>';
         container.appendChild(header);
         var eventTransfers = overall.entry_history.event_transfers;
         var eventTransfersCost =
