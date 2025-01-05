@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>H2H League Data</title>
+    <a href=""></a>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -330,7 +331,7 @@
 
         var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
-        header.textContent = playerName;
+        header.innerHTML =  `<a href="https://www2.livefpl.net/${entryId}">${playerName}</a>`;
         container.appendChild(header);
         var eventTransfers = overall.entry_history.event_transfers;
         var eventTransfersCost =
