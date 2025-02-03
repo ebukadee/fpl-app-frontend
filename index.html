@@ -2,387 +2,289 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>H2H League Data</title>
-    <a href=""></a>
     <style>
       body {
         font-family: Arial, sans-serif;
         margin: 0;
         padding: 5px;
-        background-color: #f5f5f5;
+        background: #f0f0f0;
         font-size: 12px;
-        line-height: 1.4;
+        line-height: 1.3;
       }
-      button {
-        background-color: #007bff;
-        color: #fff;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 3px;
-        font-size: 12px;
-        margin: 5px 0;
-      }
-      button:active {
-        background-color: #0056b3;
-      }
-      form {
+
+      #selectionForm {
         padding: 5px;
         background: white;
         border-radius: 3px;
         margin-bottom: 5px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
-      select {
+
+      select, button {
         padding: 4px;
-        margin: 3px 0;
+        margin: 2px;
         font-size: 12px;
-        max-width: 120px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
       }
+
+      button {
+        background: #0066cc;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+      }
+
       .h2h-match {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 5px;
+        background: white;
+        margin: 4px 0;
         padding: 6px;
-        background-color: white;
         border-radius: 3px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       }
+
       .player {
         flex: 1;
         text-align: center;
-        padding: 3px;
-        min-width: 80px;
+        padding: 2px;
+        min-width: 60px;
       }
-      .player .points {
+
+      .points {
         font-weight: bold;
         color: #333;
         font-size: 11px;
       }
+
       .player-details-pair {
         display: flex;
-        flex-direction: column;
+        flex-wrap: wrap;
+        gap: 4px;
         margin-top: 5px;
       }
+
       .player-card {
-        padding: 5px;
+        flex: 1;
+        min-width: 150px;
         background: white;
-        margin-bottom: 5px;
+        padding: 6px;
         border-radius: 3px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        margin-bottom: 4px;
       }
+
       .player-card h4 {
-        margin: 0 0 5px 0;
+        margin: 0 0 4px 0;
         font-size: 12px;
-        color: #007bff;
+        color: #0066cc;
       }
+
       .low-points {
-        color: red;
+        color: #cc0000;
         font-weight: bold;
       }
-      
-      /* Mobile-first media queries */
-      @media (min-width: 480px) {
-        .player-details-pair {
-          flex-direction: row;
-          justify-content: space-between;
-        }
+
+      @media (max-width: 480px) {
         .player-card {
-          width: 48%;
+          width: 100%;
         }
         select {
-          max-width: none;
+          width: 95%;
         }
       }
     </style>
   </head>
   <body>
     <form id="selectionForm">
-      <label for="event">Gameweek:</label>
-      <select id="event" name="event">       
-        <option value="24">Gameweek 24</option>
-        <option value="25">Gameweek 25</option>
-        <option value="26">Gameweek 26</option>
-        <option value="27">Gameweek 27</option>
-        <option value="28">Gameweek 28</option>
-        <option value="29">Gameweek 29</option>
-        <option value="30">Gameweek 30</option>
-        <option value="31">Gameweek 31</option>
-        <option value="32">Gameweek 32</option>
-        <option value="33">Gameweek 33</option>
-        <option value="34">Gameweek 34</option>
-        <option value="35">Gameweek 35</option>
-        <option value="36">Gameweek 36</option>
-        <option value="37">Gameweek 37</option>
-        <option value="38">Gameweek 38</option>
-      </select>     
-    <form id="selectionForm">
-      <label for="league">League ID:</label>
-      <select id="league" name="league">
-        <option value="2272990" selected>League 1</option>
-        <option value="2309762">League 2</option>
-      </select>
-
-      <button type="button" id="fetchData">Fetch League Data</button>
+      <div>
+        <label for="event">Gameweek:</label>
+        <select id="event" name="event">       
+          <option value="24">GW24</option>
+          <option value="25">GW25</option>
+          <!-- ... other options ... -->
+        </select>
+      </div>
+      <div>
+        <label for="league">League:</label>
+        <select id="league" name="league">
+          <option value="2272990">League 1</option>
+          <option value="2309762">League 2</option>
+        </select>
+      </div>
+      <button type="button" id="fetchData">Get Data</button>
     </form>
 
     <div id="h2hContainer"></div>
-    <div id="playerDetails" class="player-details"></div>
+    <div id="playerDetails"></div>
+
     <script src="players.js"></script>
     <script>
-      var playerPoints = {}; // Cache for player points
-      var playerPicksCache = {}; // Cache for player picks (entryId => picks)    
+      var cache = {
+        points: {},
+        picks: {}
+      };
 
       function fetchLeagueData() {
-        // Clear caches when dropdown values change
-        playerPoints = {};
-        playerPicksCache = {};
+        cache.points = {};
+        cache.picks = {};
 
-        var eventInput = document.getElementById("event").value;
-        var leagueInput = document.getElementById("league").value;
+        var eventId = document.getElementById("event").value;
+        var leagueId = document.getElementById("league").value;
+        var url = "https://stat-app.onrender.com/proxy?url=" +
+          encodeURIComponent(
+            "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/" +
+            leagueId + "/?page=1&event=" + eventId
+          );
 
-        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
-        var targetUrl =
-          "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/" +
-          leagueInput +
-          "/?page=1&event=" +
-          eventInput;
-
-        var fullUrl = proxyUrl + encodeURIComponent(targetUrl);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", fullUrl, true);
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-              var response = JSON.parse(xhr.responseText);
-              preloadPlayerPoints(eventInput, response.results);
-            } else {
-              alert("Error fetching data: " + xhr.statusText);
-            }
-          }
-        };
-
-        xhr.onerror = function () {
-          alert("Network error occurred.");
-        };
-
-        xhr.send();
-      }    
-      function preloadPlayerPoints(eventInput, matches) {
-        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
-        var pointsUrl =
-          "https://fantasy.premierleague.com/api/event/" +
-          eventInput +
-          "/live/";
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", proxyUrl + encodeURIComponent(pointsUrl), true);
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            var response = JSON.parse(xhr.responseText);
-            var elements = response.elements;
-
-            for (var i = 0; i < elements.length; i++) {
-              playerPoints[elements[i].id] = elements[i].stats.total_points;
-            }
-
-            renderH2H(matches, eventInput);
-          }
-        };
-
-        xhr.send();
+        sendRequest(url, function(response) {
+          preloadPlayerPoints(eventId, response.results);
+        });
       }
 
-      function renderH2H(matches, eventInput) {
-        var h2hContainer = document.getElementById("h2hContainer");
-        h2hContainer.innerHTML = "";
-
-        for (var i = 0; i < matches.length; i++) {
-          var match = matches[i];
-
-          var matchDiv = document.createElement("div");
-          matchDiv.className = "h2h-match";
-          matchDiv.onclick = (function (
-            entry1Id,
-            entry1Name,
-            entry2Id,
-            entry2Name
-          ) {
-            return function () {
-              renderPlayerDetails(entry1Id, entry1Name, entry2Id, entry2Name);
-            };
-          })(
-            match.entry_1_entry,
-            match.entry_1_name,
-            match.entry_2_entry,
-            match.entry_2_name
+      function preloadPlayerPoints(eventId, matches) {
+        var url = "https://stat-app.onrender.com/proxy?url=" +
+          encodeURIComponent(
+            "https://fantasy.premierleague.com/api/event/" + eventId + "/live/"
           );
 
-          calculateTotalPoints(
-            match.entry_1_entry,
-            match.entry_1_name,
-            matchDiv,
-            eventInput,
-            true
-          );
-          calculateTotalPoints(
-            match.entry_2_entry,
-            match.entry_2_name,
-            matchDiv,
-            eventInput,
-            false
-          );
-
-          h2hContainer.appendChild(matchDiv);
-        }
+        sendRequest(url, function(response) {
+          response.elements.forEach(function(player) {
+            cache.points[player.id] = player.stats.total_points;
+          });
+          renderMatches(matches, eventId);
+        });
       }
 
-      function calculateTotalPoints(entryId, entryName, container, gw, isLeft) {
-        if (playerPicksCache[entryId]) {
-          // Use cached data
-          renderCachedPoints(entryId, entryName, container, isLeft);
+      function renderMatches(matches, eventId) {
+        var container = document.getElementById("h2hContainer");
+        container.innerHTML = "";
+
+        matches.forEach(function(match) {
+          var div = createMatchDiv(match);
+          container.appendChild(div);
+          loadPlayerData(match.entry_1_entry, match.entry_1_name, div, eventId, true);
+          loadPlayerData(match.entry_2_entry, match.entry_2_name, div, eventId, false);
+        });
+      }
+
+      function createMatchDiv(match) {
+        var div = document.createElement("div");
+        div.className = "h2h-match";
+        div.onclick = function() {
+          showPlayerDetails(
+            match.entry_1_entry, match.entry_1_name,
+            match.entry_2_entry, match.entry_2_name
+          );
+        };
+        return div;
+      }
+
+      function loadPlayerData(entryId, name, container, eventId, isLeft) {
+        if (cache.picks[entryId]) {
+          renderPlayerPoints(name, cache.picks[entryId], container, isLeft);
           return;
         }
 
-        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
-        var entryGwUrl =
-          "https://fantasy.premierleague.com/api/entry/" +
-          entryId +
-          "/event/" +
-          gw +
-          "/picks/";
+        var url = "https://stat-app.onrender.com/proxy?url=" +
+          encodeURIComponent(
+            "https://fantasy.premierleague.com/api/entry/" +
+            entryId + "/event/" + eventId + "/picks/"
+          );
 
+        sendRequest(url, function(response) {
+          cache.picks[entryId] = response;
+          renderPlayerPoints(name, response, container, isLeft);
+        });
+      }
+
+      function renderPlayerPoints(name, data, container, isLeft) {
+        var points = calculateTotalPoints(data.picks);
+        var div = createPlayerDiv(name, points);
+        if (isLeft) {
+          container.insertBefore(div, container.firstChild);
+        } else {
+          container.appendChild(div);
+        }
+      }
+
+      function calculateTotalPoints(picks) {
+        return picks.reduce(function(total, pick) {
+          return total + ((cache.points[pick.element] || 0) * pick.multiplier);
+        }, 0);
+      }
+
+      function createPlayerDiv(name, points) {
+        var div = document.createElement("div");
+        div.className = "player";
+        div.innerHTML = '<div class="name">' + name + '</div>' +
+          '<div class="points">' + points + ' pts</div>';
+        return div;
+      }
+
+      function showPlayerDetails(entry1, name1, entry2, name2) {
+        var container = document.getElementById("playerDetails");
+        container.innerHTML = '<div class="player-details-pair"></div>';
+        var pair = container.firstChild;
+
+        createPlayerCard(entry1, name1, pair);
+        createPlayerCard(entry2, name2, pair);
+      }
+
+      function createPlayerCard(entryId, name, container) {
+        if (!cache.picks[entryId]) return;
+
+        var card = document.createElement("div");
+        card.className = "player-card";
+        card.innerHTML = '<h4><a href="https://www2.livefpl.net/' + 
+          entryId + '">' + name + '</a></h4>';
+
+        var history = cache.picks[entryId].entry_history;
+        var transfers = history.event_transfers + ' (' + 
+          (history.event_transfers_cost * -1) + ')';
+        
+        var transfersDiv = document.createElement("div");
+        transfersDiv.textContent = 'Transfers: ' + transfers;
+        card.appendChild(transfersDiv);
+
+        cache.picks[entryId].picks.forEach(function(pick) {
+          var points = (cache.points[pick.element] || 0) * pick.multiplier;
+          var playerName = playerData[pick.element] || 'Unknown';
+          
+          if (pick.is_captain) playerName += ' (C)';
+          if (pick.is_vice_captain) playerName += ' (VC)';
+
+          var div = document.createElement("div");
+          div.innerHTML = playerName + ': ' + 
+            (pick.multiplier === 0 ? 
+             '<span class="low-points">' + points + '</span>' : points);
+          
+          card.appendChild(div);
+        });
+
+        container.appendChild(card);
+      }
+
+      function sendRequest(url, callback) {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", proxyUrl + encodeURIComponent(entryGwUrl), true);
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            var response = JSON.parse(xhr.responseText);
-            playerPicksCache[entryId] = response; // Cache the picks
-
-            var totalPoints = calculatePoints(response.picks);
-            var entryDiv = createPlayerDiv(entryName, totalPoints);
-
-            if (isLeft) {
-              container.insertBefore(entryDiv, container.firstChild);
-            } else {
-              container.appendChild(entryDiv);
-            }
+        xhr.open('GET', url);
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            callback(JSON.parse(xhr.responseText));
+          } else {
+            alert('Error: ' + xhr.statusText);
           }
         };
-
+        xhr.onerror = function() {
+          alert('Network error');
+        };
         xhr.send();
       }
 
-      function calculatePoints(picks) {
-        var totalPoints = 0;
-        for (var i = 0; i < picks.length; i++) {
-          var basePoints = playerPoints[picks[i].element] || 0;
-          totalPoints += basePoints * picks[i].multiplier;
-        }
-        return totalPoints;
-      }
-
-      function createPlayerDiv(playerName, points) {
-        var playerDiv = document.createElement("div");
-        playerDiv.className = "player";
-
-        var nameDiv = document.createElement("div");
-        nameDiv.className = "name";
-        nameDiv.textContent = playerName;
-
-        var pointsDiv = document.createElement("div");
-        pointsDiv.className = "points";
-        pointsDiv.textContent = points + " points";
-
-        playerDiv.appendChild(nameDiv);
-        playerDiv.appendChild(pointsDiv);
-
-        return playerDiv;
-      }
-
-      function renderCachedPoints(entryId, entryName, container, isLeft) {
-        var picks = playerPicksCache[entryId].picks;
-        var totalPoints = calculatePoints(picks);
-
-        var entryDiv = createPlayerDiv(entryName, totalPoints);
-
-        if (isLeft) {
-          container.insertBefore(entryDiv, container.firstChild);
-        } else {
-          container.appendChild(entryDiv);
-        }
-      }
-
-      function renderPlayerDetails(entry1Id, entry1Name, entry2Id, entry2Name) {
-        var playerDetails = document.getElementById("playerDetails");
-        playerDetails.innerHTML = "";
-
-        var detailsPair = document.createElement("div");
-        detailsPair.className = "player-details-pair";
-
-        var entry1Details = document.createElement("div");
-        entry1Details.className = "player-card";
-
-        var entry2Details = document.createElement("div");
-        entry2Details.className = "player-card";
-
-        renderDetailsFromCache(entry1Id, entry1Name, entry1Details);
-        renderDetailsFromCache(entry2Id, entry2Name, entry2Details);
-
-        detailsPair.appendChild(entry1Details);
-        detailsPair.appendChild(entry2Details);
-
-        playerDetails.appendChild(detailsPair);
-      }
-
-      function renderDetailsFromCache(entryId, playerName, container) {
-        if (!playerPicksCache[entryId]) return;
-
-        var overall = playerPicksCache[entryId];
-        var header = document.createElement("h4");
-        header.innerHTML = '<a href="https://www2.livefpl.net/' + entryId + '">' + playerName + '</a>';
-        container.appendChild(header);
-        var eventTransfers = overall.entry_history.event_transfers;
-        var eventTransfersCost =
-          overall.entry_history.event_transfers_cost * -1;
-        var transfersCost = eventTransfers + "(" + eventTransfersCost + ")";
-        var footer = document.createElement("span");
-        footer.textContent = " " + transfersCost;
-        header.appendChild(footer);
-        for (var i = 0; i < overall.picks.length; i++) {
-          var pick = overall.picks[i];
-          var basePoints = playerPoints[pick.element] || 0;
-          var totalPoints =
-            pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
-          var playerLabel = playerData[pick.element] || "Unknown Player";
-
-          if (pick.is_captain) {
-            playerLabel += " (C)";
-          } else if (pick.is_vice_captain) {
-            playerLabel += " (VC)";
-          }
-
-          var playerDiv = document.createElement("div");
-          playerDiv.innerHTML =
-            "<span>" +
-            playerLabel +
-            "</span>: " +
-            (pick.multiplier === 0
-              ? '<span class="low-points">' + totalPoints + "</span>"
-              : totalPoints);
-
-          container.appendChild(playerDiv);
-        }
-      }
-
-      document
-        .getElementById("fetchData")
-        .addEventListener("click", fetchLeagueData);
+      document.getElementById('fetchData').addEventListener('click', fetchLeagueData);
     </script>
   </body>
 </html>
