@@ -761,3 +761,4 @@ const playerData = {
     "720": "Agbadou",
     "751": "Pereira"
 }
+window.playerData = playerData; 

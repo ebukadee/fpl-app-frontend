@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            background: #f0f0f0;
+            font-size: 14px;
+        }
+        .back-button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .player-card {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .player-value {
+            color: #009933;
+            font-weight: bold;
+        }
+        .transfers-info {
+            color: #666;
+            margin: 10px 0;
+        }
+        .error {
+            color: #cc0000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.history.back()">← Back to Matches</button>
+    <div id="playerDetails" class="loading">Loading player data...</div>
+
+    <script src="players.js"></script>
+    <script>
+        const PROXY_URL = "https://stat-app.onrender.com/proxy?url=";
+
+        async function loadPlayerData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const entryId = urlParams.get('entryId');
+            const eventId = urlParams.get('event');
+            const container = document.getElementById('playerDetails');
+            
+            if (!entryId || !eventId) {
+                container.innerHTML = '<div class="error">Missing required parameters</div>';
+                return;
+            }
+
+            try {
+                const [picksRes, valuesRes] = await Promise.all([
+                    fetch(`${PROXY_URL}${encodeURIComponent(
+                        `https://fantasy.premierleague.com/api/entry/${entryId}/event/${eventId}/picks/`
+                    )}`),
+                    fetch(`${PROXY_URL}${encodeURIComponent(
+                        'https://plan.livefpl.net/static3/local_13.json?_=' + Date.now()
+                    )}`)
+                ]);
+
+                if (!picksRes.ok) throw new Error('Picks API failed: ' + picksRes.status);
+                if (!valuesRes.ok) throw new Error('Values API failed: ' + valuesRes.status);
+
+                const picksData = await picksRes.json();
+                const valuesData = await valuesRes.json();
+
+                const playerValues = {};
+                for (const [id, value] of Object.entries(valuesData)) {
+                    playerValues[id] = Math.round(value * 100);
+                }
+
+                renderPlayerDetails(picksData, playerValues);
+
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function renderPlayerDetails(picksData, playerValues) {
+            const container = document.getElementById('playerDetails');
+            try {
+                const playersHTML = picksData.picks.map(pick => {
+                    const value = playerValues[pick.element] ?? 'N/A';
+                    const playerName = window.playerData?.[pick.element] || 'Unknown Player';
+                    let role = '';
+                    
+                    if (pick.is_captain) role = ' (C)';
+                    else if (pick.is_vice_captain) role = ' (VC)';
+
+                    return `
+                        <div class="player-row">
+                            <span>${playerName}${role}</span>
+                            <span class="player-value">${value}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = `
+                    <div class="player-card">
+                        <h2>${picksData.entry_history.entry_name}</h2>
+                        <div class="transfers-info">
+                            Transfers: ${picksData.entry_history.event_transfers} 
+                            (Cost: ${-picksData.entry_history.event_transfers_cost})
+                        </div>
+                        ${playersHTML}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Render error:', error);
+                container.innerHTML = '<div class="error">Error displaying details</div>';
+            }
+        }
+
+        // Start loading data when page loads
+        loadPlayerData();
+    </script>
+</body>
+</html>

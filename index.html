@@ -54,44 +54,19 @@
         min-width: 60px;
       }
 
+      .player-link {
+        cursor: pointer;
+        color: #0066cc;
+        text-decoration: underline;
+      }
+
       .points {
         font-weight: bold;
         color: #333;
         font-size: 11px;
       }
 
-      .player-details-pair {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        margin-top: 5px;
-      }
-
-      .player-card {
-        flex: 1;
-        min-width: 150px;
-        background: white;
-        padding: 6px;
-        border-radius: 3px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        margin-bottom: 4px;
-      }
-
-      .player-card h4 {
-        margin: 0 0 4px 0;
-        font-size: 12px;
-        color: #0066cc;
-      }
-
-      .low-points {
-        color: #cc0000;
-        font-weight: bold;
-      }
-
       @media (max-width: 480px) {
-        .player-card {
-          width: 100%;
-        }
         select {
           width: 95%;
         }
@@ -105,7 +80,19 @@
         <select id="event" name="event">       
           <option value="24">GW24</option>
           <option value="25">GW25</option>
-          <!-- ... other options ... -->
+          <option value="26">GW26</option>
+          <option value="27">GW27</option>
+          <option value="28">GW28</option>
+          <option value="29">GW29</option>
+          <option value="30">GW30</option>
+          <option value="31">GW31</option>
+          <option value="32">GW32</option>
+          <option value="33">GW33</option>
+          <option value="34">GW34</option>
+          <option value="35">GW35</option>
+          <option value="36">GW36</option>
+          <option value="37">GW37</option>
+          <option value="38">GW38</option>
         </select>
       </div>
       <div>
@@ -119,7 +106,6 @@
     </form>
 
     <div id="h2hContainer"></div>
-    <div id="playerDetails"></div>
 
     <script src="players.js"></script>
     <script>
@@ -134,11 +120,9 @@
 
         var eventId = document.getElementById("event").value;
         var leagueId = document.getElementById("league").value;
-        var url = "https://stat-app.onrender.com/proxy?url=" +
-          encodeURIComponent(
-            "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/" +
-            leagueId + "/?page=1&event=" + eventId
-          );
+        var url = getProxyUrl(
+          `https://fantasy.premierleague.com/api/leagues-h2h-matches/league/${leagueId}/?page=1&event=${eventId}`
+        );
 
         sendRequest(url, function(response) {
           preloadPlayerPoints(eventId, response.results);
@@ -146,10 +130,9 @@
       }
 
       function preloadPlayerPoints(eventId, matches) {
-        var url = "https://stat-app.onrender.com/proxy?url=" +
-          encodeURIComponent(
-            "https://fantasy.premierleague.com/api/event/" + eventId + "/live/"
-          );
+        var url = getProxyUrl(
+          `https://fantasy.premierleague.com/api/event/${eventId}/live/`
+        );
 
         sendRequest(url, function(response) {
           response.elements.forEach(function(player) {
@@ -174,36 +157,28 @@
       function createMatchDiv(match) {
         var div = document.createElement("div");
         div.className = "h2h-match";
-        div.onclick = function() {
-          showPlayerDetails(
-            match.entry_1_entry, match.entry_1_name,
-            match.entry_2_entry, match.entry_2_name
-          );
-        };
         return div;
       }
 
       function loadPlayerData(entryId, name, container, eventId, isLeft) {
         if (cache.picks[entryId]) {
-          renderPlayerPoints(name, cache.picks[entryId], container, isLeft);
+          renderPlayerPoints(name, cache.picks[entryId], container, isLeft, entryId);
           return;
         }
 
-        var url = "https://stat-app.onrender.com/proxy?url=" +
-          encodeURIComponent(
-            "https://fantasy.premierleague.com/api/entry/" +
-            entryId + "/event/" + eventId + "/picks/"
-          );
+        var url = getProxyUrl(
+          `https://fantasy.premierleague.com/api/entry/${entryId}/event/${eventId}/picks/`
+        );
 
         sendRequest(url, function(response) {
           cache.picks[entryId] = response;
-          renderPlayerPoints(name, response, container, isLeft);
+          renderPlayerPoints(name, response, container, isLeft, entryId);
         });
       }
 
-      function renderPlayerPoints(name, data, container, isLeft) {
+      function renderPlayerPoints(name, data, container, isLeft, entryId) {
         var points = calculateTotalPoints(data.picks);
-        var div = createPlayerDiv(name, points);
+        var div = createPlayerDiv(name, points, entryId);
         if (isLeft) {
           container.insertBefore(div, container.firstChild);
         } else {
@@ -217,55 +192,23 @@
         }, 0);
       }
 
-      function createPlayerDiv(name, points) {
+      function createPlayerDiv(name, points, entryId) {
         var div = document.createElement("div");
         div.className = "player";
-        div.innerHTML = '<div class="name">' + name + '</div>' +
-          '<div class="points">' + points + ' pts</div>';
+        div.innerHTML = `
+          <div class="player-link" onclick="showPlayerPage(${entryId})">${name}</div>
+          <div class="points">${points} pts</div>
+        `;
         return div;
       }
 
-      function showPlayerDetails(entry1, name1, entry2, name2) {
-        var container = document.getElementById("playerDetails");
-        container.innerHTML = '<div class="player-details-pair"></div>';
-        var pair = container.firstChild;
-
-        createPlayerCard(entry1, name1, pair);
-        createPlayerCard(entry2, name2, pair);
+      function showPlayerPage(entryId) {
+        const eventId = document.getElementById('event').value;
+        window.location.href = `player.html?entryId=${entryId}&event=${eventId}`;
       }
 
-      function createPlayerCard(entryId, name, container) {
-        if (!cache.picks[entryId]) return;
-
-        var card = document.createElement("div");
-        card.className = "player-card";
-        card.innerHTML = '<h4><a href="https://www2.livefpl.net/' + 
-          entryId + '">' + name + '</a></h4>';
-
-        var history = cache.picks[entryId].entry_history;
-        var transfers = history.event_transfers + ' (' + 
-          (history.event_transfers_cost * -1) + ')';
-        
-        var transfersDiv = document.createElement("div");
-        transfersDiv.textContent = 'Transfers: ' + transfers;
-        card.appendChild(transfersDiv);
-
-        cache.picks[entryId].picks.forEach(function(pick) {
-          var points = (cache.points[pick.element] || 0) * pick.multiplier;
-          var playerName = playerData[pick.element] || 'Unknown';
-          
-          if (pick.is_captain) playerName += ' (C)';
-          if (pick.is_vice_captain) playerName += ' (VC)';
-
-          var div = document.createElement("div");
-          div.innerHTML = playerName + ': ' + 
-            (pick.multiplier === 0 ? 
-             '<span class="low-points">' + points + '</span>' : points);
-          
-          card.appendChild(div);
-        });
-
-        container.appendChild(card);
+      function getProxyUrl(targetUrl) {
+        return `https://stat-app.onrender.com/proxy?url=${encodeURIComponent(targetUrl)}`;
       }
 
       function sendRequest(url, callback) {
