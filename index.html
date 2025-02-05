@@ -7,27 +7,20 @@
     <style>
       /* Base Styles */
       body {
-        background-color: #f2f4f7;
-        color: #333;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
-        padding: 20px;
-        font-size: 14px;
       }
       
       a {
         color: #007bff;
         text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
+      }   
       
       /* Form Styling */
       form {
         background: #fff;
-        padding: 15px 20px;
-        margin-bottom: 20px;        
+        padding: 6px 10px;
+        margin-bottom: 10px;        
         align-items: center;
       }
       
@@ -42,7 +35,7 @@
       }
       
       select {
-        padding: 8px;
+        padding: 6px;
         border: 1px solid #ccc;
         border-radius: 4px;
       }
@@ -50,11 +43,9 @@
       button {
         background-color: #007bff;
         color: #fff;
-        padding: 5px 8px;
-        border-radius: 4px;
-        cursor: pointer;
+        padding: 7px 10px;
+        border: none;
         font-weight: 600;
-        transition: background-color 0.2s;
         margin-top: 20px;
       }
       button:hover {
@@ -69,7 +60,7 @@
       }
       
       .h2h-match {
-        background: #fff;
+        background: #f3f3f3;
         padding: 15px;
         display: flex;
         justify-content: space-between;
@@ -87,7 +78,7 @@
       
       .player .points {
         font-size: 13px;
-        color: #555;
+        color: #272727;
       }
       
       /* Details Section */
@@ -104,9 +95,7 @@
         background: #fff;
         flex: 1;
         padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        min-width: 300px;
+        font-size:12px ;
       }
       
       .player-card h4 {
@@ -416,7 +405,7 @@
             ? (myEoData[pick.element] * 100).toFixed(1) + "%"
             : "0%";
           // Wrap EO percentage in a span with its own styling
-          playerLabel += ' (<span class="eo-percentage">' + eoPercentage + "</span>)";
+          playerLabel += ' <span class="eo-percentage">' + eoPercentage + "</span>";
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
             "<span>" +
