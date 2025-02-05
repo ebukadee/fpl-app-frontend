@@ -72,7 +72,7 @@
     <form id="selectionForm">
       <div>
         <label for="event">Gameweek:</label>
-        <select id="event" name="event">       
+        <select id="event" name="event">
           <option value="24">Gameweek 24</option>
           <option value="25">Gameweek 25</option>
           <option value="26">Gameweek 26</option>
@@ -102,10 +102,38 @@
 
     <div id="h2hContainer"></div>
     <div id="playerDetails" class="player-details"></div>
+    <!-- Ensure that players.js exists and defines the variable "playerData" -->
     <script src="players.js"></script>
     <script>
+      // Global caches and data variables
       var playerPoints = {}; // Cache for player points
-      var playerPicksCache = {}; // Cache for player picks (entryId => picks)    
+      var playerPicksCache = {}; // Cache for player picks (entryId => picks)
+      var myEoData = null; // Will store the EO lookup data for your picks
+
+      // Fetch your EO data immediately (for entry id "8697194")
+      function fetchMyEoData() {
+        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
+        var url = "https://plan.livefpl.net/static3/local_13.json?_=24222";
+        var eoUrl = proxyUrl + encodeURIComponent(url);
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", eoUrl, true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+              myEoData = JSON.parse(xhr.responseText);
+            } catch (err) {
+              console.error("Error parsing EO data:", err);
+            }
+          }
+        };
+        xhr.onerror = function () {
+          console.error("Network error when fetching EO data.");
+        };
+        xhr.send();
+      }
+
+      // Call fetchMyEoData on page load
+      fetchMyEoData();
 
       function fetchLeagueData() {
         // Clear caches when dropdown values change
@@ -143,7 +171,7 @@
         };
 
         xhr.send();
-      }    
+      }
 
       function preloadPlayerPoints(eventInput, matches) {
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
@@ -319,7 +347,12 @@
 
         var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
-        header.innerHTML = '<a href="https://www2.livefpl.net/' + entryId + '">' + playerName + '</a>';
+        header.innerHTML =
+          '<a href="https://www2.livefpl.net/' +
+          entryId +
+          '">' +
+          playerName +
+          "</a>";
         container.appendChild(header);
         var eventTransfers = overall.entry_history.event_transfers;
         var eventTransfersCost =
@@ -328,18 +361,30 @@
         var footer = document.createElement("span");
         footer.textContent = " " + transfersCost;
         header.appendChild(footer);
+
         for (var i = 0; i < overall.picks.length; i++) {
           var pick = overall.picks[i];
           var basePoints = playerPoints[pick.element] || 0;
           var totalPoints =
             pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
+          // Use the playerData from players.js, or fallback to "Unknown Player"
           var playerLabel = playerData[pick.element] || "Unknown Player";
 
+          // Append the captain or vice-captain designation
           if (pick.is_captain) {
             playerLabel += " (C)";
           } else if (pick.is_vice_captain) {
             playerLabel += " (VC)";
           }
+
+          // If this is your own entry (id "8697194"), look up the EO value,
+          // convert it to a percentage, and append it in brackets.
+         
+            var eoPercentage = myEoData[pick.element] ? (myEoData[pick.element] * 100).toFixed(1) + "%" : 0 ;
+            console.log(eoPercentage);
+
+            playerLabel += " (" + eoPercentage + ")";
+          
 
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
