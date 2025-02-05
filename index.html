@@ -5,66 +5,154 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>H2H League Data</title>
     <style>
+      /* Base Styles */
       body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        margin: 0 auto;
-        width: 100%;
-        font-size: 12px;
-        overflow: auto;
+        background-color: #f2f4f7;
+        color: #333;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        font-size: 14px;
       }
+      
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      
+      /* Form Styling */
+      form {
+        background: #fff;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+      }
+      
+      form div {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      label {
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+      
+      select {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        min-width: 150px;
+      }
+      
       button {
         background-color: #007bff;
-        color: #fff;
         border: none;
-        padding: 6px 12px;
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 4px;
         cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        margin-top: 20px;
       }
       button:hover {
         background-color: #0056b3;
       }
-      form {
-        padding: 6px;
-      }
-      .h2h-match {
+      
+      /* Match Container */
+      #h2hContainer {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        padding: 8px;
-        background-color: #f0f0f0;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        flex-direction: column;
+        gap: 12px;
       }
+      
+      .h2h-match {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+        transition: transform 0.1s;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+      }
+      .h2h-match:hover {
+        transform: translateY(-2px);
+      }
+      
       .player {
-        flex: 1;
         text-align: center;
       }
-      .player .points {
-        font-weight: bold;
-        margin-top: 5px;
+      
+      .player .name {
+        font-weight: 600;
+        margin-bottom: 4px;
       }
+      
+      .player .points {
+        font-size: 13px;
+        color: #555;
+      }
+      
+      /* Details Section */
+      #playerDetails {
+        margin-top: 30px;
+      }
+      
       .player-details-pair {
         display: flex;
-        justify-content: space-between;
-        margin-top: 10px;
+        gap: 20px;
+        flex-wrap: wrap;
       }
+      
       .player-card {
-        padding: 10px;
-        background-color: #f9f9f9;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        width: 48%;
+        background: #fff;
+        flex: 1;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        min-width: 300px;
       }
+      
       .player-card h4 {
-        margin-bottom: 8px;
-        font-size: 14px;
-        font-weight: bold;
         text-align: center;
+        margin-bottom: 12px;
+        font-size: 16px;
       }
-      .low-points {
-        color: red;
+      
+      /* Pick styling */
+      .player-card div {
+        padding: 6px 8px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      
+      .player-card div:last-child {
+        border-bottom: none;
+      }
+      
+      .player-card span {
+        display: inline-block;
+      }
+      
+      /* EO Percentage styling for better contrast */
+      .player-card .eo-percentage {
         font-weight: bold;
+        color: #d63384; /* a vivid pink/magenta color for contrast */
+      }
+      
+      .low-points {
+        color: #d63384;
+        font-weight: 600;
       }
     </style>
   </head>
@@ -131,30 +219,23 @@
         };
         xhr.send();
       }
-
-      // Call fetchMyEoData on page load
       fetchMyEoData();
 
       function fetchLeagueData() {
         // Clear caches when dropdown values change
         playerPoints = {};
         playerPicksCache = {};
-
         var eventInput = document.getElementById("event").value;
         var leagueInput = document.getElementById("league").value;
-
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
         var targetUrl =
           "https://fantasy.premierleague.com/api/leagues-h2h-matches/league/" +
           leagueInput +
           "/?page=1&event=" +
           eventInput;
-
         var fullUrl = proxyUrl + encodeURIComponent(targetUrl);
-
         var xhr = new XMLHttpRequest();
         xhr.open("GET", fullUrl, true);
-
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4) {
             if (xhr.status === 200) {
@@ -165,11 +246,9 @@
             }
           }
         };
-
         xhr.onerror = function () {
           alert("Network error occurred.");
         };
-
         xhr.send();
       }
 
@@ -179,33 +258,26 @@
           "https://fantasy.premierleague.com/api/event/" +
           eventInput +
           "/live/";
-
         var xhr = new XMLHttpRequest();
         xhr.open("GET", proxyUrl + encodeURIComponent(pointsUrl), true);
-
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4 && xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
             var elements = response.elements;
-
             for (var i = 0; i < elements.length; i++) {
               playerPoints[elements[i].id] = elements[i].stats.total_points;
             }
-
             renderH2H(matches, eventInput);
           }
         };
-
         xhr.send();
       }
 
       function renderH2H(matches, eventInput) {
         var h2hContainer = document.getElementById("h2hContainer");
         h2hContainer.innerHTML = "";
-
         for (var i = 0; i < matches.length; i++) {
           var match = matches[i];
-
           var matchDiv = document.createElement("div");
           matchDiv.className = "h2h-match";
           matchDiv.onclick = (function (
@@ -223,7 +295,6 @@
             match.entry_2_entry,
             match.entry_2_name
           );
-
           calculateTotalPoints(
             match.entry_1_entry,
             match.entry_1_name,
@@ -238,18 +309,15 @@
             eventInput,
             false
           );
-
           h2hContainer.appendChild(matchDiv);
         }
       }
 
       function calculateTotalPoints(entryId, entryName, container, gw, isLeft) {
         if (playerPicksCache[entryId]) {
-          // Use cached data
           renderCachedPoints(entryId, entryName, container, isLeft);
           return;
         }
-
         var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
         var entryGwUrl =
           "https://fantasy.premierleague.com/api/entry/" +
@@ -257,18 +325,14 @@
           "/event/" +
           gw +
           "/picks/";
-
         var xhr = new XMLHttpRequest();
         xhr.open("GET", proxyUrl + encodeURIComponent(entryGwUrl), true);
-
         xhr.onreadystatechange = function () {
           if (xhr.readyState === 4 && xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
-            playerPicksCache[entryId] = response; // Cache the picks
-
+            playerPicksCache[entryId] = response;
             var totalPoints = calculatePoints(response.picks);
             var entryDiv = createPlayerDiv(entryName, totalPoints);
-
             if (isLeft) {
               container.insertBefore(entryDiv, container.firstChild);
             } else {
@@ -276,7 +340,6 @@
             }
           }
         };
-
         xhr.send();
       }
 
@@ -292,27 +355,21 @@
       function createPlayerDiv(playerName, points) {
         var playerDiv = document.createElement("div");
         playerDiv.className = "player";
-
         var nameDiv = document.createElement("div");
         nameDiv.className = "name";
         nameDiv.textContent = playerName;
-
         var pointsDiv = document.createElement("div");
         pointsDiv.className = "points";
         pointsDiv.textContent = points + " points";
-
         playerDiv.appendChild(nameDiv);
         playerDiv.appendChild(pointsDiv);
-
         return playerDiv;
       }
 
       function renderCachedPoints(entryId, entryName, container, isLeft) {
         var picks = playerPicksCache[entryId].picks;
         var totalPoints = calculatePoints(picks);
-
         var entryDiv = createPlayerDiv(entryName, totalPoints);
-
         if (isLeft) {
           container.insertBefore(entryDiv, container.firstChild);
         } else {
@@ -323,28 +380,21 @@
       function renderPlayerDetails(entry1Id, entry1Name, entry2Id, entry2Name) {
         var playerDetails = document.getElementById("playerDetails");
         playerDetails.innerHTML = "";
-
         var detailsPair = document.createElement("div");
         detailsPair.className = "player-details-pair";
-
         var entry1Details = document.createElement("div");
         entry1Details.className = "player-card";
-
         var entry2Details = document.createElement("div");
         entry2Details.className = "player-card";
-
         renderDetailsFromCache(entry1Id, entry1Name, entry1Details);
         renderDetailsFromCache(entry2Id, entry2Name, entry2Details);
-
         detailsPair.appendChild(entry1Details);
         detailsPair.appendChild(entry2Details);
-
         playerDetails.appendChild(detailsPair);
       }
 
       function renderDetailsFromCache(entryId, playerName, container) {
         if (!playerPicksCache[entryId]) return;
-
         var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
         header.innerHTML =
@@ -355,37 +405,27 @@
           "</a>";
         container.appendChild(header);
         var eventTransfers = overall.entry_history.event_transfers;
-        var eventTransfersCost =
-          overall.entry_history.event_transfers_cost * -1;
+        var eventTransfersCost = overall.entry_history.event_transfers_cost * -1;
         var transfersCost = eventTransfers + "(" + eventTransfersCost + ")";
         var footer = document.createElement("span");
         footer.textContent = " " + transfersCost;
         header.appendChild(footer);
-
         for (var i = 0; i < overall.picks.length; i++) {
           var pick = overall.picks[i];
           var basePoints = playerPoints[pick.element] || 0;
           var totalPoints =
             pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
-          // Use the playerData from players.js, or fallback to "Unknown Player"
           var playerLabel = playerData[pick.element] || "Unknown Player";
-
-          // Append the captain or vice-captain designation
           if (pick.is_captain) {
             playerLabel += " (C)";
           } else if (pick.is_vice_captain) {
             playerLabel += " (VC)";
           }
-
-          // If this is your own entry (id "8697194"), look up the EO value,
-          // convert it to a percentage, and append it in brackets.
-         
-            var eoPercentage = myEoData[pick.element] ? (myEoData[pick.element] * 100).toFixed(1) + "%" : 0 ;
-            console.log(eoPercentage);
-
-            playerLabel += " (" + eoPercentage + ")";
-          
-
+          var eoPercentage = myEoData[pick.element]
+            ? (myEoData[pick.element] * 100).toFixed(1) + "%"
+            : "0%";
+          // Wrap EO percentage in a span with its own styling
+          playerLabel += ' (<span class="eo-percentage">' + eoPercentage + "</span>)";
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
             "<span>" +
@@ -394,7 +434,6 @@
             (pick.multiplier === 0
               ? '<span class="low-points">' + totalPoints + "</span>"
               : totalPoints);
-
           container.appendChild(playerDiv);
         }
       }
