@@ -1,258 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EO Points Calculator</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-        font-size: 14px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-      th,
-      td {
-        padding: 8px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-      }
-      th {
-        background-color: #f5f5f5;
-      }
-      .numeric {
-        text-align: right;
-      }
-      #loading {
-        font-style: italic;
-        color: #666;
-      }
-      #content {
-        display: none;
-      }
-      .pagination {
-        margin-top: 20px;
-        text-align: center;
-      }
-      .pagination button {
-        margin: 0 5px;
-        padding: 5px 10px;
-        cursor: pointer;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .numeric {
+            text-align: right;
+        }
+        #loading {
+            font-style: italic;
+            color: #666;
+        }
+        #content {
+            display: none;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <h1>EO Points Calculator</h1>
     <div id="loading">Loading data...</div>
     <div id="content">
-      <div>
-        <label for="event">Gameweek: </label>
-        <select id="event">
-          <!-- Options populated by JavaScript -->
-        </select>
-      </div>
-      <table id="eoTable">
-        <thead>
-          <tr>
-            <th>Player Name</th>
-            <th class="numeric">Live Score</th>
-            <th class="numeric">EO (%)</th>
-            <th class="numeric">EO Points</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-      <div class="pagination">
-        <button id="prevPage" disabled>Previous</button>
-        <span id="pageInfo"></span>
-        <button id="nextPage" disabled>Next</button>
-      </div>
+        <div>
+            <label for="event">Gameweek: </label>
+            <select id="event">
+                <!-- Options populated by JavaScript -->
+            </select>
+        </div>
+        <table id="eoTable">
+            <thead>
+                <tr>
+                    <th>Player Name</th>
+                    <th class="numeric">Live Score</th>
+                    <th class="numeric">EO (%)</th>
+                    <th class="numeric">EO Points</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="pagination">
+            <button id="prevPage" disabled>Previous</button>
+            <span id="pageInfo"></span>
+            <button id="nextPage" disabled>Next</button>
+        </div>
     </div>
 
     <script src="specificPlayerData.js"></script>
     <script>
-      var currentData = [];
-      var currentPage = 1;
-      var itemsPerPage = 30;
+     
+        var currentData = [];
+        var currentPage = 1;
+        var itemsPerPage = 30;
 
-      // Get gameweek from URL hash (e.g., #24 → GW24)
-      function getGameweekFromURL() {
-        var hash = window.location.hash.substring(1);
-        var gw = parseInt(hash);
-        if (!isNaN(gw)) {
-          return Math.min(Math.max(gw, 1), 38);
-        }
-        return 1; // Default to GW1
-      }
-
-      function populateGameweekSelector() {
-        var select = document.getElementById("event");
-        var currentGW = getGameweekFromURL();
-
-        for (var gw = 1; gw <= 38; gw++) {
-          var option = document.createElement("option");
-          option.value = gw;
-          option.text = "GW " + gw;
-          if (gw === currentGW) option.selected = true;
-          select.appendChild(option);
-        }
-      }
-
-      function fetchData() {
-        var eventInput = getGameweekFromURL();
-        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
-
-        // URLs for data
-        var liveUrl =
-          proxyUrl +
-          encodeURIComponent(
-            "https://fantasy.premierleague.com/api/event/" +
-              eventInput +
-              "/live/"
-          );
-
-        var eoUrl =
-          proxyUrl +
-          encodeURIComponent(
-            "https://plan.livefpl.net/static3/local_13.json?_=" + Date.now()
-          );
-
-        document.getElementById("loading").style.display = "block";
-        document.getElementById("content").style.display = "none";
-
-        var xhrLive = new XMLHttpRequest();
-        var xhrEO = new XMLHttpRequest();
-        var liveData, eoData;
-
-        xhrLive.open("GET", liveUrl, true);
-        xhrLive.onreadystatechange = function () {
-          if (xhrLive.readyState === 4 && xhrLive.status === 200) {
-            liveData = JSON.parse(xhrLive.responseText).elements;
-            if (eoData) processData(liveData, eoData);
-          }
-        };
-
-        xhrEO.open("GET", eoUrl, true);
-        xhrEO.onreadystatechange = function () {
-          if (xhrEO.readyState === 4 && xhrEO.status === 200) {
-            eoData = JSON.parse(xhrEO.responseText);
-            if (liveData) processData(liveData, eoData);
-          }
-        };
-
-        xhrLive.send();
-        xhrEO.send();
-      }
-
-      // Process and merge data
-      function processData(liveData, eoData) {
-        currentData = [];
-
-        // Create lookup for live scores
-        var liveScores = {};
-        for (var i = 0; i < liveData.length; i++) {
-          liveScores[liveData[i].id] = liveData[i].stats.total_points;
+        // Get gameweek from URL hash (e.g., #24 → GW24)
+        function getGameweekFromURL() {
+            var hash = window.location.hash.substring(1);
+            var gw = parseInt(hash);
+            if (!isNaN(gw)) {
+                return Math.min(Math.max(gw, 1), 38);
+            }
+            return 1; // Default to GW1
         }
 
-        // Merge data
-        for (var playerId in eoData) {
-          if (eoData.hasOwnProperty(playerId)) {
-            currentData.push({
-              id: playerId,
-              name: window.specificPlayerData[playerId] || "Unknown",
-              liveScore: liveScores[playerId] || 0,
-              eo: eoData[playerId],
+        function populateGameweekSelector() {
+            var select = document.getElementById("event");
+            var currentGW = getGameweekFromURL();
+            
+            for (var gw = 1; gw <= 38; gw++) {
+                var option = document.createElement("option");
+                option.value = gw;
+                option.text = "GW " + gw;
+                if (gw === currentGW) option.selected = true;
+                select.appendChild(option);
+            }
+        }
+
+        function fetchData() {
+            var eventInput = getGameweekFromURL();
+            var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
+            
+            // URLs for data
+            var liveUrl = proxyUrl + encodeURIComponent(
+                "https://fantasy.premierleague.com/api/event/" + eventInput + "/live/"
+            );
+            
+            var eoUrl = proxyUrl + encodeURIComponent(
+                "https://plan.livefpl.net/static3/local_13.json?_=" + Date.now()
+            );
+
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("content").style.display = "none";
+
+            var xhrLive = new XMLHttpRequest();
+            var xhrEO = new XMLHttpRequest();
+            var liveData, eoData;
+
+            xhrLive.open("GET", liveUrl, true);
+            xhrLive.onreadystatechange = function () {
+                if (xhrLive.readyState === 4 && xhrLive.status === 200) {
+                    liveData = JSON.parse(xhrLive.responseText).elements;
+                    if (eoData) processData(liveData, eoData);
+                }
+            };
+
+            xhrEO.open("GET", eoUrl, true);
+            xhrEO.onreadystatechange = function () {
+                if (xhrEO.readyState === 4 && xhrEO.status === 200) {
+                    eoData = JSON.parse(xhrEO.responseText);
+                    if (liveData) processData(liveData, eoData);
+                }
+            };
+
+            xhrLive.send();
+            xhrEO.send();
+        }
+
+        // Process and merge data
+        function processData(liveData, eoData) {
+            currentData = [];
+
+            // Create lookup for live scores
+            var liveScores = {};
+            for (var i = 0; i < liveData.length; i++) {
+                liveScores[liveData[i].id] = liveData[i].stats.total_points;
+            }
+
+            // Merge data
+            for (var playerId in eoData) {
+                if (eoData.hasOwnProperty(playerId)) {
+                    currentData.push({
+                        id: playerId,
+                        name: window.specificPlayerData[playerId] || "Unknown",
+                        liveScore: liveScores[playerId] || 0,
+                        eo: eoData[playerId]
+                    });
+                }
+            }
+
+            renderTable();
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("content").style.display = "block";
+        }
+
+        // Render the table with pagination
+        function renderTable() {
+            var tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+
+            // Sort by EO Points descending
+            currentData.sort(function (a, b) {
+                return (b.eo * b.liveScore) - (a.eo * a.liveScore);
             });
-          }
+
+            // Pagination logic
+            var startIndex = (currentPage - 1) * itemsPerPage;
+            var endIndex = startIndex + itemsPerPage;
+            var pageData = currentData.slice(startIndex, endIndex);
+
+            for (var i = 0; i < pageData.length; i++) {
+                var player = pageData[i];
+                var row = document.createElement("tr");
+
+                row.innerHTML = "<td>" + player.name + "</td>" +
+                               "<td class='numeric'>" + player.liveScore + "</td>" +
+                               "<td class='numeric'>" + (player.eo * 100).toFixed(1) + "%</td>" +
+                               "<td class='numeric'>" + (Math.round(player.eo * player.liveScore * 100) / 100) + "</td>";
+
+                tbody.appendChild(row);
+            }
+
+            // Update pagination controls
+            document.getElementById("pageInfo").innerHTML = "Page " + currentPage + " of " + Math.ceil(currentData.length / itemsPerPage);
+            document.getElementById("prevPage").disabled = currentPage === 1;
+            document.getElementById("nextPage").disabled = currentPage === Math.ceil(currentData.length / itemsPerPage);
         }
 
-        renderTable();
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("content").style.display = "block";
-      }
-
-      // Render the table with pagination
-      function renderTable() {
-        var tbody = document.getElementById("tableBody");
-        tbody.innerHTML = "";
-
-        // Sort by EO Points descending
-        currentData.sort(function (a, b) {
-          return b.eo * b.liveScore - a.eo * a.liveScore;
+        // Pagination event handlers
+        document.getElementById("prevPage").addEventListener("click", function () {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
         });
 
-        // Pagination logic
-        var startIndex = (currentPage - 1) * itemsPerPage;
-        var endIndex = startIndex + itemsPerPage;
-        var pageData = currentData.slice(startIndex, endIndex);
+        document.getElementById("nextPage").addEventListener("click", function () {
+            if (currentPage < Math.ceil(currentData.length / itemsPerPage)) {
+                currentPage++;
+                renderTable();
+            }
+        });
 
-        for (var i = 0; i < pageData.length; i++) {
-          var player = pageData[i];
-          var row = document.createElement("tr");
-
-          row.innerHTML =
-            "<td>" +
-            player.name +
-            "</td>" +
-            "<td class='numeric'>" +
-            player.liveScore +
-            "</td>" +
-            "<td class='numeric'>" +
-            (player.eo * 100).toFixed(1) +
-            "%</td>" +
-            "<td class='numeric'>" +
-            Math.round(player.eo * player.liveScore * 100) / 100 +
-            "</td>";
-
-          tbody.appendChild(row);
+        function init() {
+            populateGameweekSelector();
+            document.getElementById("event").addEventListener("change", function () {
+                window.location.hash = this.value; // Update hash on selection
+            });
+            window.addEventListener('hashchange', fetchData); // React to hash changes
+            fetchData();
         }
 
-        // Update pagination controls
-        document.getElementById("pageInfo").innerHTML =
-          "Page " +
-          currentPage +
-          " of " +
-          Math.ceil(currentData.length / itemsPerPage);
-        document.getElementById("prevPage").disabled = currentPage === 1;
-        document.getElementById("nextPage").disabled =
-          currentPage === Math.ceil(currentData.length / itemsPerPage);
-      }
-
-      // Pagination event handlers
-      document
-        .getElementById("prevPage")
-        .addEventListener("click", function () {
-          if (currentPage > 1) {
-            currentPage--;
-            renderTable();
-          }
-        });
-
-      document
-        .getElementById("nextPage")
-        .addEventListener("click", function () {
-          if (currentPage < Math.ceil(currentData.length / itemsPerPage)) {
-            currentPage++;
-            renderTable();
-          }
-        });
-
-      function init() {
-        populateGameweekSelector();
-        document
-          .getElementById("event")
-          .addEventListener("change", function () {
-            window.location.hash = this.value; // Update hash on selection
-          });
-        window.addEventListener("hashchange", fetchData); // React to hash changes
-        fetchData();
-      }
-
-      init();
+        init();
     </script>
-  </body>
+</body>
 </html>
