@@ -3,137 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Details</title>
+    <title>EO Points Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 10px;
-            background: #f0f0f0;
+            margin: 20px;
             font-size: 14px;
         }
-        .back-button {
-            background: #0066cc;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            cursor: pointer;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
-        .player-card {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
         }
-        .player-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+        th {
+            background-color: #f5f5f5;
         }
-        .player-value {
-            color: #009933;
-            font-weight: bold;
+        .numeric {
+            text-align: right;
         }
-        .transfers-info {
+        #loading {
+            font-style: italic;
             color: #666;
-            margin: 10px 0;
         }
-        .error {
-            color: #cc0000;
-            font-weight: bold;
+        #content {
+            display: none;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <button class="back-button" onclick="window.history.back()">← Back to Matches</button>
-    <div id="playerDetails" class="loading">Loading player data...</div>
+    <h1>EO Points Calculator</h1>
+    <div id="loading">Loading data...</div>
+    <div id="content">
+        <div>
+            <label for="event">Gameweek: </label>
+            <select id="event">
+                <!-- Options populated by JavaScript -->
+            </select>
+        </div>
+        <table id="eoTable">
+            <thead>
+                <tr>
+                    <th>Player Name</th>
+                    <th class="numeric">Live Score</th>
+                    <th class="numeric">EO (%)</th>
+                    <th class="numeric">EO Points</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="pagination">
+            <button id="prevPage" disabled>Previous</button>
+            <span id="pageInfo"></span>
+            <button id="nextPage" disabled>Next</button>
+        </div>
+    </div>
 
-    <script src="players.js"></script>
+    <script src="specificPlayerData.js"></script>
     <script>
-        const PROXY_URL = "https://stat-app.onrender.com/proxy?url=";
+        var currentData = [];
+        var currentPage = 1;
+        var itemsPerPage = 30; // Number of rows per page
 
-        async function loadPlayerData() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const entryId = urlParams.get('entryId');
-            const eventId = urlParams.get('event');
-            const container = document.getElementById('playerDetails');
-            
-            if (!entryId || !eventId) {
-                container.innerHTML = '<div class="error">Missing required parameters</div>';
-                return;
-            }
-
-            try {
-                const [picksRes, valuesRes] = await Promise.all([
-                    fetch(`${PROXY_URL}${encodeURIComponent(
-                        `https://fantasy.premierleague.com/api/entry/${entryId}/event/${eventId}/picks/`
-                    )}`),
-                    fetch(`${PROXY_URL}${encodeURIComponent(
-                        'https://plan.livefpl.net/static3/local_13.json?_=' + Date.now()
-                    )}`)
-                ]);
-
-                if (!picksRes.ok) throw new Error('Picks API failed: ' + picksRes.status);
-                if (!valuesRes.ok) throw new Error('Values API failed: ' + valuesRes.status);
-
-                const picksData = await picksRes.json();
-                const valuesData = await valuesRes.json();
-
-                const playerValues = {};
-                for (const [id, value] of Object.entries(valuesData)) {
-                    playerValues[id] = Math.round(value * 100);
+        // Extract gameweek from URL (e.g., /24 → GW24)
+        function getGameweekFromURL() {
+            var pathParts = window.location.pathname.split('/');
+            for (var i = 0; i < pathParts.length; i++) {
+                var gw = parseInt(pathParts[i]);
+                if (!isNaN(gw)) {
+                    return Math.min(Math.max(gw, 1), 38); // Clamp to 1-38
                 }
+            }
+            return 1; // Default to GW1
+        }
 
-                renderPlayerDetails(picksData, playerValues);
-
-            } catch (error) {
-                console.error('Error:', error);
-                container.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        // Populate gameweek dropdown
+        function populateGameweekSelector() {
+            var select = document.getElementById("event");
+            var currentGW = getGameweekFromURL();
+            
+            for (var gw = 1; gw <= 38; gw++) {
+                var option = document.createElement("option");
+                option.value = gw;
+                option.text = "GW " + gw;
+                if (gw === currentGW) option.selected = true;
+                select.appendChild(option);
             }
         }
 
-        function renderPlayerDetails(picksData, playerValues) {
-            const container = document.getElementById('playerDetails');
-            try {
-                const playersHTML = picksData.picks.map(pick => {
-                    const value = playerValues[pick.element] ?? 'N/A';
-                    const playerName = window.playerData?.[pick.element] || 'Unknown Player';
-                    let role = '';
-                    
-                    if (pick.is_captain) role = ' (C)';
-                    else if (pick.is_vice_captain) role = ' (VC)';
+        // Fetch live scores and EO data
+        function fetchData() {
+            var eventInput = getGameweekFromURL();
+            var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
+            
+            // Update URL without reload
+            window.history.replaceState({}, '', '/' + eventInput);
 
-                    return `
-                        <div class="player-row">
-                            <span>${playerName}${role}</span>
-                            <span class="player-value">${value}</span>
-                        </div>
-                    `;
-                }).join('');
-                console.log(picksData);
-                
+            var liveUrl = proxyUrl + encodeURIComponent(
+                "https://fantasy.premierleague.com/api/event/" + eventInput + "/live/"
+            );
+            
+            var eoUrl = proxyUrl + encodeURIComponent(
+                "https://plan.livefpl.net/static3/local_13.json?_=" + Date.now()
+            );
 
-                container.innerHTML = `
-                    <div class="player-card">
-                        <h2>${picksData.entry_history.entry_name}</h2>
-                        <div class="transfers-info">
-                            Transfers: ${picksData.entry_history.event_transfers} 
-                            (Cost: ${-picksData.entry_history.event_transfers_cost})
-                        </div>
-                        ${playersHTML}
-                    </div>
-                `;
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("content").style.display = "none";
 
-            } catch (error) {
-                console.error('Render error:', error);
-                container.innerHTML = '<div class="error">Error displaying details</div>';
-            }
+            var xhrLive = new XMLHttpRequest();
+            var xhrEO = new XMLHttpRequest();
+            var liveData, eoData;
+
+            xhrLive.open("GET", liveUrl, true);
+            xhrLive.onreadystatechange = function () {
+                if (xhrLive.readyState === 4 && xhrLive.status === 200) {
+                    liveData = JSON.parse(xhrLive.responseText).elements;
+                    if (eoData) processData(liveData, eoData);
+                }
+            };
+
+            xhrEO.open("GET", eoUrl, true);
+            xhrEO.onreadystatechange = function () {
+                if (xhrEO.readyState === 4 && xhrEO.status === 200) {
+                    eoData = JSON.parse(xhrEO.responseText);
+                    if (liveData) processData(liveData, eoData);
+                }
+            };
+
+            xhrLive.send();
+            xhrEO.send();
         }
 
-        // Start loading data when page loads
-        loadPlayerData();
+        // Process and merge data
+        function processData(liveData, eoData) {
+            currentData = [];
+
+            // Create lookup for live scores
+            var liveScores = {};
+            for (var i = 0; i < liveData.length; i++) {
+                liveScores[liveData[i].id] = liveData[i].stats.total_points;
+            }
+
+            // Merge data
+            for (var playerId in eoData) {
+                if (eoData.hasOwnProperty(playerId)) {
+                    currentData.push({
+                        id: playerId,
+                        name: window.specificPlayerData[playerId] || "Unknown",
+                        liveScore: liveScores[playerId] || 0,
+                        eo: eoData[playerId]
+                    });
+                }
+            }
+
+            renderTable();
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("content").style.display = "block";
+        }
+
+        // Render the table with pagination
+        function renderTable() {
+            var tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+
+            // Sort by EO Points descending
+            currentData.sort(function (a, b) {
+                return (b.eo * b.liveScore) - (a.eo * a.liveScore);
+            });
+
+            // Pagination logic
+            var startIndex = (currentPage - 1) * itemsPerPage;
+            var endIndex = startIndex + itemsPerPage;
+            var pageData = currentData.slice(startIndex, endIndex);
+
+            for (var i = 0; i < pageData.length; i++) {
+                var player = pageData[i];
+                var row = document.createElement("tr");
+
+                row.innerHTML = "<td>" + player.name + "</td>" +
+                               "<td class='numeric'>" + player.liveScore + "</td>" +
+                               "<td class='numeric'>" + (player.eo * 100).toFixed(1) + "%</td>" +
+                               "<td class='numeric'>" + (Math.round(player.eo * player.liveScore * 100) / 100) + "</td>";
+
+                tbody.appendChild(row);
+            }
+
+            // Update pagination controls
+            document.getElementById("pageInfo").innerHTML = "Page " + currentPage + " of " + Math.ceil(currentData.length / itemsPerPage);
+            document.getElementById("prevPage").disabled = currentPage === 1;
+            document.getElementById("nextPage").disabled = currentPage === Math.ceil(currentData.length / itemsPerPage);
+        }
+
+        // Pagination event handlers
+        document.getElementById("prevPage").addEventListener("click", function () {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        });
+
+        document.getElementById("nextPage").addEventListener("click", function () {
+            if (currentPage < Math.ceil(currentData.length / itemsPerPage)) {
+                currentPage++;
+                renderTable();
+            }
+        });
+
+        // Initialize the page
+        function init() {
+            populateGameweekSelector();
+            document.getElementById("event").addEventListener("change", function () {
+                window.location.href = '/' + this.value;
+            });
+            fetchData();
+        }
+
+        init();
     </script>
 </body>
 </html>
