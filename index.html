@@ -10,6 +10,7 @@
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           font-size: 12px;
           overflow-x: auto; /* Enable horizontal scrolling for entire page */
+          margin: 0;
       }
   
       /* Shared Container Styles */
@@ -44,7 +45,8 @@
           margin-bottom: 8px;
           display: flex;
           justify-content: space-between;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          border-bottom: 1px solid #e0e0e0;
+
       }
   
       /* Player Details Styling */
@@ -65,10 +67,7 @@
       }
   
       /* Keep elements in single line */
-      .player {
-          flex-shrink: 0;
-          width: 180px; /* Fixed player column width */
-      }
+      
       .player-card div {
         padding: 6px 8px;
         border-bottom: 1px solid #e0e0e0;
