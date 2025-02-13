@@ -5,34 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>H2H League Data</title>
     <style>
+      /* Base Styles */
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         font-size: 12px;
       }
+      
       a {
         color: #007bff;
         text-decoration: none;
       }   
+      
+      /* Form Styling */
       form {
         background: #fff;
         padding: 6px 10px;
         margin-bottom: 10px;        
         align-items: center;
       }
+      
       form div {
         display: flex;
         flex-direction: column;
       }
+      
       label {
         font-weight: 600;
         margin-bottom: 5px;
       }
+      
       select {
         padding: 6px;
         border: 1px solid #ccc;
         border-radius: 4px;
       }
+      
       button {
         background-color: #007bff;
         color: #fff;
@@ -44,10 +52,13 @@
       button:hover {
         background-color: #0056b3;
       }
+      
+      /* Match Container */
       #h2hContainer {
         display: flex;
         flex-direction: column;
       }
+      
       .h2h-match {
         background: #f3f3f3;
         padding: 15px;
@@ -56,53 +67,72 @@
         align-items: center;
         margin-bottom: 8px;
       }     
+      
       .player {
         text-align: center;
       }
+      
       .player .name {
         font-weight: 600;
-        font-size: 7px;
+        font-size: 10px;
         margin-bottom: 4px;
       }
+      
       .player .points {
         font-size: 12px;
         font-weight: bolder;
         color: #272727;
       }
+      
+      /* Details Section */
       #playerDetails {
         margin-top: 30px;
       }
+      
       .player-details-pair {
         display: flex;
       }
+      
       .player-card {
         background: #fff;
         flex: 1;
         padding: 15px;
         font-size:10px ;
       }
+      
       .player-card h4 {
         text-align: center;
         margin-bottom: 12px;
         font-size: 16px;
         font-weight:bold
       }
+      
+      /* Pick styling */
       .player-card div {
         padding: 6px 8px;
         border-bottom: 1px solid #e0e0e0;
-        font-weight: bold;
       }
+      
       .player-card div:last-child {
         border-bottom: none;
       }
+      .player-card div{
+        font-weight: bold;
+
+
+      }
+      
       .player-card span {
         display: inline-block;
         font-weight: bold;
       }
-      .eo-percentage {
-        color: #335ed6;
+      
+      /* EO Percentage styling for better contrast */
+      .player-card .eo-percentage {
+        color: #335ed6; /* a vivid pink/magenta color for contrast */
         font-weight:500;
       }
+      
       .low-points {
         color: #ff0000;
       }
@@ -142,43 +172,17 @@
 
     <div id="h2hContainer"></div>
     <div id="playerDetails" class="player-details"></div>
+    <!-- Ensure that players.js exists and defines the variable "playerData" -->
     <script src="players.js"></script>
     <script>
-      var playerPoints = {};
-      var playerPicksCache = {};
-      var myEoData = null;
-      var eoRequestInProgress = false;
+      // Global caches and data variables
+      var playerPoints = {}; // Cache for player points
+      var playerPicksCache = {}; // Cache for player picks (entryId => picks)
+      var myEoData = null; // Will store the EO lookup data for your picks
 
-      function fetchMyEoData(callback) {
-        if (eoRequestInProgress) return;
-        eoRequestInProgress = true;
-        
-        var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
-        var url = "https://plan.livefpl.net/static3/local_13.json?_=" + Date.now();
-        var eoUrl = proxyUrl + encodeURIComponent(url);
-        
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", eoUrl, true);
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-            eoRequestInProgress = false;
-            if (xhr.status === 200) {
-              try {
-                myEoData = JSON.parse(xhr.responseText);
-                if (typeof callback === 'function') callback();
-              } catch (err) {
-                console.error("EO data parse error:", err);
-              }
-            }
-          }
-        };
-        xhr.onerror = function () {
-          eoRequestInProgress = false;
-        };
-        xhr.send();
-      }
-
+     
       function fetchLeagueData() {
+        // Clear caches when dropdown values change
         playerPoints = {};
         playerPicksCache = {};
         var eventInput = document.getElementById("event").value;
@@ -197,8 +201,13 @@
             if (xhr.status === 200) {
               var response = JSON.parse(xhr.responseText);
               preloadPlayerPoints(eventInput, response.results);
+            } else {
+              alert("Error fetching data: " + xhr.statusText);
             }
           }
+        };
+        xhr.onerror = function () {
+          alert("Network error occurred.");
         };
         xhr.send();
       }
@@ -346,16 +355,14 @@
 
       function renderDetailsFromCache(entryId, playerName, container) {
         if (!playerPicksCache[entryId]) return;
-        if (!myEoData && !eoRequestInProgress) {
-          fetchMyEoData(function() {
-            renderDetailsFromCache(entryId, playerName, container);
-          });
-          return;
-        }
-
         var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
-        header.innerHTML = '<a href="https://www2.livefpl.net/' + entryId + '">' + playerName + '</a>';
+        header.innerHTML =
+          '<a href="https://www2.livefpl.net/' +
+          entryId +
+          '">' +
+          playerName +
+          "</a>";
         container.appendChild(header);
         var eventTransfers = overall.entry_history.event_transfers;
         var eventTransfersCost = overall.entry_history.event_transfers_cost * -1;
@@ -363,34 +370,35 @@
         var footer = document.createElement("span");
         footer.textContent = " " + transfersCost;
         header.appendChild(footer);
-
         for (var i = 0; i < overall.picks.length; i++) {
           var pick = overall.picks[i];
           var basePoints = playerPoints[pick.element] || 0;
-          var totalPoints = pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
+          var totalPoints =
+            pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
           var playerLabel = playerData[pick.element] || "Unknown Player";
-          var eoPercentage = "N/A";
-
-          if (myEoData && myEoData[pick.element]) {
-            eoPercentage = (myEoData[pick.element] * 100).toFixed(1) + "%";
+          if (pick.is_captain) {
+            playerLabel += " (C)";
+          } else if (pick.is_vice_captain) {
+            playerLabel += " (VC)";
           }
-
-          if (pick.is_captain) playerLabel += " (C)";
-          if (pick.is_vice_captain) playerLabel += " (VC)";
-
+          
+          // Wrap EO percentage in a span with its own styling
+        
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
-            "<span>" + playerLabel + 
-            ' <span class="eo-percentage">(' + eoPercentage + ')</span></span> ' +
+            "<span>" +
+            playerLabel +
+            "</span> " +
             (pick.multiplier === 0
               ? '<span class="low-points">' + totalPoints + "</span>"
               : totalPoints);
-
           container.appendChild(playerDiv);
         }
       }
 
-      document.getElementById("fetchData").addEventListener("click", fetchLeagueData);
+      document
+        .getElementById("fetchData")
+        .addEventListener("click", fetchLeagueData);
     </script>
   </body>
 </html>
