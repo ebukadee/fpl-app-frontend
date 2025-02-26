@@ -12,7 +12,6 @@ const specificPlayerData = {
   20: "Thomas",
   23: "Trossard",
   24: "White",
-  73: "Neto",
   54: "Rogers",
   58: "Watkins",
   385: "Rashford",

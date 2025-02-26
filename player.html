@@ -48,16 +48,31 @@
             padding: 5px 10px;
             cursor: pointer;
         }
+        .my-pick {
+            background-color: #e8f4ff;
+        }
+        #view-options {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .positive-gain {
+            color: green;
+        }
+        .negative-gain {
+            color: red;
+        }
     </style>
 </head>
 <body>
     <h1>EO Points Calculator</h1>
     <div id="loading">Loading data...</div>
     <div id="content">
-        <div>
-            <label for="event">Gameweek: </label>
-            <select id="event">
-                <!-- Options populated by JavaScript -->
+        <div id="view-options">
+            <label>View: </label>
+            <select id="viewType">
+                <option value="default" selected>Default (All Players)</option>
+                <option value="threat">Threat (Remove My Picks)</option>
+                <option value="gains">Gains (My Picks Only)</option>
             </select>
         </div>
         <table id="eoTable">
@@ -67,6 +82,7 @@
                     <th class="numeric" id="sort-liveScore">Live Score <span class="sort-arrow" id="arrow-liveScore"></span></th>
                     <th class="numeric" id="sort-eo">EO (%) <span class="sort-arrow" id="arrow-eo"></span></th>
                     <th class="numeric" id="sort-eoPoints">EO Points <span class="sort-arrow" id="arrow-eoPoints"></span></th>
+                    <th class="numeric" id="sort-gain" style="display: none">Gain <span class="sort-arrow" id="arrow-gain"></span></th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -81,10 +97,14 @@
     <script src="specificPlayerData.js"></script>
     <script>
         var currentData = [];
+        var filteredData = [];
+        var myPicks = [];
         var currentPage = 1;
         var itemsPerPage = 30;
         var currentSortColumn = 'eoPoints';
         var currentSortDirection = 'desc';
+        var currentView = 'default';
+        var gw = getGameweekFromURL();
 
         // Get gameweek from URL hash (e.g., #24 → GW24)
         function getGameweekFromURL() {
@@ -96,30 +116,20 @@
             return 1; // Default to GW1
         }
 
-        function populateGameweekSelector() {
-            var select = document.getElementById("event");
-            var currentGW = getGameweekFromURL();
-            
-            for (var gw = 1; gw <= 38; gw++) {
-                var option = document.createElement("option");
-                option.value = gw;
-                option.text = "GW " + gw;
-                if (gw === currentGW) option.selected = true;
-                select.appendChild(option);
-            }
-        }
-
         function fetchData() {
-            var eventInput = getGameweekFromURL();
             var proxyUrl = "https://stat-app.onrender.com/proxy?url=";
             
             // URLs for data
             var liveUrl = proxyUrl + encodeURIComponent(
-                "https://fantasy.premierleague.com/api/event/" + eventInput + "/live/"
+                "https://fantasy.premierleague.com/api/event/" + gw + "/live/"
             );
             
             var eoUrl = proxyUrl + encodeURIComponent(
                 "https://plan.livefpl.net/static3/local_13.json?_=" + Date.now()
+            );
+
+            var entryGwUrl = proxyUrl + encodeURIComponent(
+                "https://fantasy.premierleague.com/api/entry/8697194/event/" + gw + "/picks/"
             );
 
             document.getElementById("loading").style.display = "block";
@@ -127,13 +137,14 @@
 
             var xhrLive = new XMLHttpRequest();
             var xhrEO = new XMLHttpRequest();
-            var liveData, eoData;
+            var xhrPicks = new XMLHttpRequest();
+            var liveData, eoData, picksData;
 
             xhrLive.open("GET", liveUrl, true);
             xhrLive.onreadystatechange = function () {
                 if (xhrLive.readyState === 4 && xhrLive.status === 200) {
                     liveData = JSON.parse(xhrLive.responseText).elements;
-                    if (eoData) processData(liveData, eoData);
+                    if (eoData && picksData) processData(liveData, eoData, picksData);
                 }
             };
 
@@ -141,17 +152,27 @@
             xhrEO.onreadystatechange = function () {
                 if (xhrEO.readyState === 4 && xhrEO.status === 200) {
                     eoData = JSON.parse(xhrEO.responseText);
-                    if (liveData) processData(liveData, eoData);
+                    if (liveData && picksData) processData(liveData, eoData, picksData);
+                }
+            };
+
+            xhrPicks.open("GET", entryGwUrl, true);
+            xhrPicks.onreadystatechange = function () {
+                if (xhrPicks.readyState === 4 && xhrPicks.status === 200) {
+                    picksData = JSON.parse(xhrPicks.responseText);
+                    if (liveData && eoData) processData(liveData, eoData, picksData);
                 }
             };
 
             xhrLive.send();
             xhrEO.send();
+            xhrPicks.send();
         }
 
         // Process and merge data
-        function processData(liveData, eoData) {
+        function processData(liveData, eoData, picksData) {
             currentData = [];
+            myPicks = [];
 
             // Create lookup for live scores
             var liveScores = {};
@@ -159,29 +180,81 @@
                 liveScores[liveData[i].id] = liveData[i].stats.total_points;
             }
 
+            // Extract my picks
+            if (picksData && picksData.picks) {
+                for (var i = 0; i < picksData.picks.length; i++) {
+                    myPicks.push(picksData.picks[i].element);
+                }
+            }
+
             // Merge data
             for (var playerId in eoData) {
                 if (eoData.hasOwnProperty(playerId)) {
-                    var eoPoints = (eoData[playerId] * (liveScores[playerId] || 0));
+                    var id = parseInt(playerId);
+                    var liveScore = liveScores[id] || 0;
+                    var eoValue = eoData[playerId];
+                    var eoPoints = eoValue * liveScore;
+                    var gain = liveScore - eoPoints;
+                    var isMyPick = myPicks.indexOf(id) !== -1;
+
                     currentData.push({
-                        id: playerId,
-                        name: window.specificPlayerData[playerId] || "Unknown",
-                        liveScore: liveScores[playerId] || 0,
-                        eo: eoData[playerId],
-                        eoPoints: eoPoints
+                        id: id,
+                        name: window.specificPlayerData[id] || "Unknown",
+                        liveScore: liveScore,
+                        eo: eoValue,
+                        eoPoints: eoPoints,
+                        gain: gain,
+                        isMyPick: isMyPick
                     });
                 }
             }
 
+            applyViewFilter();
+        }
+
+        function applyViewFilter() {
+            switch (currentView) {
+                case 'threat':
+                    // Show players that are NOT in my team
+                    filteredData = currentData.filter(function(player) {
+                        return !player.isMyPick;
+                    });
+                    // Hide gain column
+                    document.getElementById("sort-gain").style.display = "none";
+                    break;
+                    
+                case 'gains':
+                    // Show only my picks
+                    filteredData = currentData.filter(function(player) {
+                        return player.isMyPick;
+                    });
+                    // Show gain column
+                    document.getElementById("sort-gain").style.display = "table-cell";
+                    break;
+                    
+                case 'default':
+                default:
+                    // Show all players
+                    filteredData = currentData.slice();
+                    // Hide gain column
+                    document.getElementById("sort-gain").style.display = "none";
+                    break;
+            }
+            
+            // Reset to page 1 when filter changes
+            currentPage = 1;
+            
+            // Sort the filtered data
             sortData();
             renderTable();
+            
             document.getElementById("loading").style.display = "none";
             document.getElementById("content").style.display = "block";
         }
 
         // Sort data based on current sort settings
         function sortData() {
-            currentData.sort(function(a, b) {
+            filteredData.sort(function(a, b) {
                 var valueA, valueB;
                 
                 if (currentSortColumn === 'name') {
@@ -193,6 +266,9 @@
                 } else if (currentSortColumn === 'eo') {
                     valueA = a.eo;
                     valueB = b.eo;
+                } else if (currentSortColumn === 'gain') {
+                    valueA = a.gain;
+                    valueB = b.gain;
                 } else {
                     valueA = a.eoPoints;
                     valueB = b.eoPoints;
@@ -214,24 +290,35 @@
             // Pagination logic
             var startIndex = (currentPage - 1) * itemsPerPage;
             var endIndex = startIndex + itemsPerPage;
-            var pageData = currentData.slice(startIndex, endIndex);
+            var pageData = filteredData.slice(startIndex, endIndex);
 
             for (var i = 0; i < pageData.length; i++) {
                 var player = pageData[i];
                 var row = document.createElement("tr");
+                
+                if (player.isMyPick) {
+                    row.className = "my-pick";
+                }
 
-                row.innerHTML = "<td>" + player.name + "</td>" +
-                               "<td class='numeric'>" + player.liveScore + "</td>" +
-                               "<td class='numeric'>" + (player.eo * 100).toFixed(1) + "%</td>" +
-                               "<td class='numeric'>" + (Math.round(player.eoPoints * 100) / 100) + "</td>";
-
+                var html = "<td>" + player.name + "</td>" +
+                          "<td class='numeric'>" + player.liveScore + "</td>" +
+                          "<td class='numeric'>" + (player.eo * 100).toFixed(1) + "%</td>" +
+                          "<td class='numeric'>" + (Math.round(player.eoPoints * 100) / 100).toFixed(2) + "</td>";
+                
+                // Add gain column if in gains view
+                if (currentView === 'gains') {
+                    var gainClass = player.gain >= 0 ? "positive-gain" : "negative-gain";
+                    html += "<td class='numeric " + gainClass + "'>" + player.gain.toFixed(2) + "</td>";
+                }
+                
+                row.innerHTML = html;
                 tbody.appendChild(row);
             }
 
             // Update pagination controls
-            document.getElementById("pageInfo").innerHTML = "Page " + currentPage + " of " + Math.ceil(currentData.length / itemsPerPage);
+            document.getElementById("pageInfo").innerHTML = "Page " + currentPage + " of " + Math.ceil(filteredData.length / itemsPerPage);
             document.getElementById("prevPage").disabled = currentPage === 1;
-            document.getElementById("nextPage").disabled = currentPage === Math.ceil(currentData.length / itemsPerPage);
+            document.getElementById("nextPage").disabled = currentPage === Math.ceil(filteredData.length / itemsPerPage) || filteredData.length === 0;
             
             // Update sort indicators
             updateSortIndicators();
@@ -250,6 +337,14 @@
             if (arrowElement) {
                 arrowElement.innerHTML = currentSortDirection === 'asc' ? "▲" : "▼";
             }
+            
+            // Update gain arrow if visible
+            if (currentView === 'gains') {
+                document.getElementById("arrow-gain").innerHTML = "";
+                if (currentSortColumn === 'gain') {
+                    document.getElementById("arrow-gain").innerHTML = currentSortDirection === 'asc' ? "▲" : "▼";
+                }
+            }
         }
 
         // Handle column header clicks for sorting
@@ -258,6 +353,7 @@
             document.getElementById("sort-liveScore").onclick = function() { handleSortClick('liveScore'); };
             document.getElementById("sort-eo").onclick = function() { handleSortClick('eo'); };
             document.getElementById("sort-eoPoints").onclick = function() { handleSortClick('eoPoints'); };
+            document.getElementById("sort-gain").onclick = function() { handleSortClick('gain'); };
         }
         
         function handleSortClick(column) {
@@ -283,21 +379,27 @@
         };
 
         document.getElementById("nextPage").onclick = function() {
-            if (currentPage < Math.ceil(currentData.length / itemsPerPage)) {
+            if (currentPage < Math.ceil(filteredData.length / itemsPerPage)) {
                 currentPage++;
                 renderTable();
             }
         };
 
-        function init() {
-            populateGameweekSelector();
-            setupSortingEvents();
-            
-            document.getElementById("event").onchange = function() {
-                window.location.hash = this.value; // Update hash on selection
+        // View change handler
+        function setupViewChangeEvent() {
+            document.getElementById("viewType").onchange = function() {
+                currentView = this.value;
+                applyViewFilter();
             };
-            
-            window.onhashchange = fetchData; // React to hash changes
+        }
+
+        function init() {
+            setupSortingEvents();
+            setupViewChangeEvent();
+            window.onhashchange = function() {
+                gw = getGameweekFromURL();
+                fetchData();
+            };
             fetchData();
         }
 
