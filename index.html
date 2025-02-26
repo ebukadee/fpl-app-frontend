@@ -443,14 +443,19 @@
           var totalPoints = pick.multiplier === 0 ? basePoints : basePoints * pick.multiplier;
           var playerLabel = playerData && playerData[pick.element] ? playerData[pick.element] : "Unknown";
           
-          if (pick.is_captain) playerLabel += " (C)";
-          else if (pick.is_vice_captain) playerLabel += " (VC)";
+          // Handle captain/vice-captain suffixes separately
+          var suffix = "";
+          if (pick.is_captain) suffix = " (C)";
+          else if (pick.is_vice_captain) suffix = " (VC)";
           
-          var displayLabel = playerLabel.length > 6 ? playerLabel.substr(0, 3) + "..." : playerLabel;
+          // Truncate base name if longer than 6 characters (excluding suffix)
+          var baseName = playerLabel;
+          var displayName = baseName.length > 6 ? baseName.substr(0, 3) + "..." : baseName;
+          var displayLabel = displayName + suffix;
           
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
-            "<span class='pick-name' title='" + playerLabel + "'>" + displayLabel + "</span> " +
+            "<span class='pick-name' title='" + playerLabel + suffix + "'>" + displayLabel + "</span> " +
             (pick.multiplier === 0
               ? '<span class="low-points">' + totalPoints + "</span>"
               : totalPoints);
