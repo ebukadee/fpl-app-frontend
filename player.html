@@ -18,11 +18,19 @@
         }
         th {
             background-color: #f5f5f5;
+            cursor: pointer;
+            position: relative;
+        }
+        th:hover {
+            background-color: #e5e5e5;
+        }
+        th .sort-arrow {
+            position: absolute;
+            right: 8px;
         }
         .numeric {
             text-align: center;
             border-bottom: 1px solid #ddd;
-
         }
         #loading {
             font-style: italic;
@@ -55,10 +63,10 @@
         <table id="eoTable">
             <thead>
                 <tr>
-                    <th>Player Name</th>
-                    <th class="numeric">Live Score</th>
-                    <th class="numeric">EO (%)</th>
-                    <th class="numeric">EO Points</th>
+                    <th id="sort-name">Player Name <span class="sort-arrow" id="arrow-name"></span></th>
+                    <th class="numeric" id="sort-liveScore">Live Score <span class="sort-arrow" id="arrow-liveScore"></span></th>
+                    <th class="numeric" id="sort-eo">EO (%) <span class="sort-arrow" id="arrow-eo"></span></th>
+                    <th class="numeric" id="sort-eoPoints">EO Points <span class="sort-arrow" id="arrow-eoPoints"></span></th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -72,10 +80,11 @@
 
     <script src="specificPlayerData.js"></script>
     <script>
-     
         var currentData = [];
         var currentPage = 1;
         var itemsPerPage = 30;
+        var currentSortColumn = 'eoPoints';
+        var currentSortDirection = 'desc';
 
         // Get gameweek from URL hash (e.g., #24 → GW24)
         function getGameweekFromURL() {
@@ -153,29 +162,54 @@
             // Merge data
             for (var playerId in eoData) {
                 if (eoData.hasOwnProperty(playerId)) {
+                    var eoPoints = (eoData[playerId] * (liveScores[playerId] || 0));
                     currentData.push({
                         id: playerId,
                         name: window.specificPlayerData[playerId] || "Unknown",
                         liveScore: liveScores[playerId] || 0,
-                        eo: eoData[playerId]
+                        eo: eoData[playerId],
+                        eoPoints: eoPoints
                     });
                 }
             }
 
+            sortData();
             renderTable();
             document.getElementById("loading").style.display = "none";
             document.getElementById("content").style.display = "block";
+        }
+
+        // Sort data based on current sort settings
+        function sortData() {
+            currentData.sort(function(a, b) {
+                var valueA, valueB;
+                
+                if (currentSortColumn === 'name') {
+                    valueA = a.name.toLowerCase();
+                    valueB = b.name.toLowerCase();
+                } else if (currentSortColumn === 'liveScore') {
+                    valueA = a.liveScore;
+                    valueB = b.liveScore;
+                } else if (currentSortColumn === 'eo') {
+                    valueA = a.eo;
+                    valueB = b.eo;
+                } else {
+                    valueA = a.eoPoints;
+                    valueB = b.eoPoints;
+                }
+                
+                if (currentSortDirection === 'asc') {
+                    return (valueA > valueB) ? 1 : -1;
+                } else {
+                    return (valueA < valueB) ? 1 : -1;
+                }
+            });
         }
 
         // Render the table with pagination
         function renderTable() {
             var tbody = document.getElementById("tableBody");
             tbody.innerHTML = "";
-
-            // Sort by EO Points descending
-            currentData.sort(function (a, b) {
-                return (b.eo * b.liveScore) - (a.eo * a.liveScore);
-            });
 
             // Pagination logic
             var startIndex = (currentPage - 1) * itemsPerPage;
@@ -189,7 +223,7 @@
                 row.innerHTML = "<td>" + player.name + "</td>" +
                                "<td class='numeric'>" + player.liveScore + "</td>" +
                                "<td class='numeric'>" + (player.eo * 100).toFixed(1) + "%</td>" +
-                               "<td class='numeric'>" + (Math.round(player.eo * player.liveScore * 100) / 100) + "</td>";
+                               "<td class='numeric'>" + (Math.round(player.eoPoints * 100) / 100) + "</td>";
 
                 tbody.appendChild(row);
             }
@@ -198,29 +232,72 @@
             document.getElementById("pageInfo").innerHTML = "Page " + currentPage + " of " + Math.ceil(currentData.length / itemsPerPage);
             document.getElementById("prevPage").disabled = currentPage === 1;
             document.getElementById("nextPage").disabled = currentPage === Math.ceil(currentData.length / itemsPerPage);
+            
+            // Update sort indicators
+            updateSortIndicators();
+        }
+
+        // Update the sort indicators in the table headers
+        function updateSortIndicators() {
+            // Clear all sort indicators
+            document.getElementById("arrow-name").innerHTML = "";
+            document.getElementById("arrow-liveScore").innerHTML = "";
+            document.getElementById("arrow-eo").innerHTML = "";
+            document.getElementById("arrow-eoPoints").innerHTML = "";
+            
+            // Set the active sort indicator
+            var arrowElement = document.getElementById("arrow-" + currentSortColumn);
+            if (arrowElement) {
+                arrowElement.innerHTML = currentSortDirection === 'asc' ? "▲" : "▼";
+            }
+        }
+
+        // Handle column header clicks for sorting
+        function setupSortingEvents() {
+            document.getElementById("sort-name").onclick = function() { handleSortClick('name'); };
+            document.getElementById("sort-liveScore").onclick = function() { handleSortClick('liveScore'); };
+            document.getElementById("sort-eo").onclick = function() { handleSortClick('eo'); };
+            document.getElementById("sort-eoPoints").onclick = function() { handleSortClick('eoPoints'); };
+        }
+        
+        function handleSortClick(column) {
+            if (column === currentSortColumn) {
+                // Toggle direction if same column clicked
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, default to descending for numeric, ascending for text
+                currentSortColumn = column;
+                currentSortDirection = (column === 'name') ? 'asc' : 'desc';
+            }
+            
+            sortData();
+            renderTable();
         }
 
         // Pagination event handlers
-        document.getElementById("prevPage").addEventListener("click", function () {
+        document.getElementById("prevPage").onclick = function() {
             if (currentPage > 1) {
                 currentPage--;
                 renderTable();
             }
-        });
+        };
 
-        document.getElementById("nextPage").addEventListener("click", function () {
+        document.getElementById("nextPage").onclick = function() {
             if (currentPage < Math.ceil(currentData.length / itemsPerPage)) {
                 currentPage++;
                 renderTable();
             }
-        });
+        };
 
         function init() {
             populateGameweekSelector();
-            document.getElementById("event").addEventListener("change", function () {
+            setupSortingEvents();
+            
+            document.getElementById("event").onchange = function() {
                 window.location.hash = this.value; // Update hash on selection
-            });
-            window.addEventListener('hashchange', fetchData); // React to hash changes
+            };
+            
+            window.onhashchange = fetchData; // React to hash changes
             fetchData();
         }
 
