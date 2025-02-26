@@ -37,11 +37,11 @@
         flex: 1;
       }
 
-      .player-name {
+      .player-name, .pick-name {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 5ch;
+        max-width: 6ch;
         display: inline-block;
       }
 
@@ -160,11 +160,8 @@
       var pendingXHR = null;
 
       function fetchLeagueData() {
-        // Clear previous data
         playerPoints = {};
         playerPicksCache = {};
-        
-        // Clear any previous pending requests
         if (pendingXHR) {
           pendingXHR.abort();
         }
@@ -239,7 +236,6 @@
           var matchDiv = document.createElement("div");
           matchDiv.className = "h2h-match";
           
-          // Use closure to capture the current values
           matchDiv.onclick = createToggleFunction(
             matchWrapper,
             match.entry_1_entry,
@@ -275,11 +271,13 @@
       function renderMatchPoints(entry1Id, entry1Name, entry2Id, entry2Name, container, gw) {
         var leftPlayer = document.createElement("div");
         leftPlayer.className = "player";
-        leftPlayer.innerHTML = '<div class="player-name" title="' + entry1Name + '">' + entry1Name + '</div>';
+        var displayName1 = entry1Name.length > 6 ? entry1Name.substr(0, 3) + "..." : entry1Name;
+        leftPlayer.innerHTML = '<div class="player-name" title="' + entry1Name + '">' + displayName1 + '</div>';
         
         var rightPlayer = document.createElement("div");
         rightPlayer.className = "player";
-        rightPlayer.innerHTML = '<div class="player-name" title="' + entry2Name + '">' + entry2Name + '</div>';
+        var displayName2 = entry2Name.length > 6 ? entry2Name.substr(0, 3) + "..." : entry2Name;
+        rightPlayer.innerHTML = '<div class="player-name" title="' + entry2Name + '">' + displayName2 + '</div>';
         
         var scoreContainer = document.createElement("div");
         scoreContainer.className = "score-container";
@@ -430,9 +428,10 @@
         
         var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
+        var displayPlayerName = playerName.length > 6 ? playerName.substr(0, 3) + "..." : playerName;
         header.innerHTML =
           '<a href="https://www2.livefpl.net/' + entryId + '" title="' + playerName + '">' + 
-          playerName + "</a>" +
+          displayPlayerName + "</a>" +
           " " + overall.entry_history.event_transfers + "(" + (overall.entry_history.event_transfers_cost * -1) + ")";
         container.appendChild(header);
         
@@ -447,9 +446,11 @@
           if (pick.is_captain) playerLabel += " (C)";
           else if (pick.is_vice_captain) playerLabel += " (VC)";
           
+          var displayLabel = playerLabel.length > 6 ? playerLabel.substr(0, 3) + "..." : playerLabel;
+          
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
-            "<span>" + playerLabel + "</span> " +
+            "<span class='pick-name' title='" + playerLabel + "'>" + displayLabel + "</span> " +
             (pick.multiplier === 0
               ? '<span class="low-points">' + totalPoints + "</span>"
               : totalPoints);
@@ -481,7 +482,6 @@
         handleUrlParams();
       }
 
-      // Legacy compatibility - use onload instead of addEventListener
       window.onload = init;
     </script>
   </body>
