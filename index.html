@@ -22,7 +22,6 @@
         padding: 4px;
         margin-bottom: 4px;
         border-bottom: 1px solid #e0e0e0;
-        cursor: pointer;
       }
 
       .match-content {
@@ -37,11 +36,26 @@
         flex: 1;
       }
 
-      .player-name, .pick-name {
+      .player-name {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 6ch;
+        display: inline-block;
+      }
+
+      .pick-name {
+        white-space: nowrap;
+      }
+
+      .pick-name .name-part {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 6ch;
+      }
+
+      .pick-name .suffix-part {
         display: inline-block;
       }
 
@@ -428,7 +442,7 @@
         
         var overall = playerPicksCache[entryId];
         var header = document.createElement("h4");
-        var displayPlayerName = playerName.length > 6 ? playerName.substr(0, 3) + "..." : playerName;
+        var displayPlayerName = playerName.length > 8 ? playerName.substr(0, 6) + "..." : playerName;
         header.innerHTML =
           '<a href="https://www2.livefpl.net/' + entryId + '" title="' + playerName + '">' + 
           displayPlayerName + "</a>" +
@@ -448,14 +462,16 @@
           if (pick.is_captain) suffix = " (C)";
           else if (pick.is_vice_captain) suffix = " (VC)";
           
-          // Truncate base name if longer than 6 characters (excluding suffix)
+          // Truncate base name if longer than 6 characters
           var baseName = playerLabel;
-          var displayName = baseName.length > 6 ? baseName.substr(0, 3) + "..." : baseName;
-          var displayLabel = displayName + suffix;
+          var displayName = baseName.length > 8 ? baseName.substr(0, 6) + "..." : baseName;
           
           var playerDiv = document.createElement("div");
           playerDiv.innerHTML =
-            "<span class='pick-name' title='" + playerLabel + suffix + "'>" + displayLabel + "</span> " +
+            "<span class='pick-name' title='" + playerLabel + suffix + "'>" +
+            "<span class='name-part'>" + displayName + "</span>" +
+            "<span class='suffix-part'>" + suffix + "</span>" +
+            "</span> " +
             (pick.multiplier === 0
               ? '<span class="low-points">' + totalPoints + "</span>"
               : totalPoints);
